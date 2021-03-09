@@ -437,7 +437,7 @@ four_full <- merge(four_counts, four_sym_and_id, all = TRUE) Original
 #four_full <- merge(four_counts, stem_dropped, all = TRUE)
 
 
-# remove row 4589 *******************************************************
+# remove row 4589 ************************************************************************
 four_full<- four_full[-c(4589),]
 
 
@@ -462,17 +462,45 @@ sum(four_full$count) #1196 Yes. Matches four_year_olds_tokendf, **
 
 
 sum(four_counts$count)
-sum(length(four_year_olds_tokens_df$form))
+sum(length(four2_year_olds_tokens_df$form)) #1196 because this is without removing 'thought.'
 #why is there one more row?
 
-length(four_full$form == "friend")
-count(four_full[1:100,], vars = "form")
+#length(four_full$form == "friend")
+#count(four_full[1:100,], vars = "form")
 
 length(unique(four_full$form))
 length(unique(three_full$form))
-# *********************
+# *****************************************************************************************
 # now just combine four_full and three_full
+# keep stem so that you can collapse across each stem. 
 three_full <- subset(three_full, select = -c(stem))
 
 new <- rbind(three_full, four_full)
-#check to make sure the # of tokens are the same. -1 tokens for the four year olds.
+#check to make sure the # of tokens are the same. -1 tokens for the four year olds. maybe add the stems back so you can collapse?
+
+sum(four_full$count)
+sum(three_full$count)
+length(three_year_olds_tokens_df$form)
+sum(new$count)
+# making sure the count for types is the same as the token length.
+
+four_year_olds_types2_df <- get_types(
+  collection = "Eng-NA",
+  role = "target_child",
+  age = c(48, 60),
+  type = sym_list$form
+)
+#types count
+sum(four_year_olds_types2_df$count) #1555
+#tokens count
+sum(length(four_year_olds_tokens_df$gloss)) #1555
+
+#after filtering pos - correct
+sum(length(four2_year_olds_tokens_df$form)) #1196 again, because this one still has 'thought' in it.
+# four_full is 1195
+
+sum(three_full$count) #872
+
+sum(new$count) # 2067. goood 872 + 1195.
+
+# ************************************* COLLAPSING ********************************************
