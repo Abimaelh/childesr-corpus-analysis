@@ -290,13 +290,19 @@ three_year_olds_tokens_df <- three_year_olds_tokens_df %>% arrange(target_child_
 
 three2_year_olds_tokens_df <- select(three_year_olds_tokens_df, 'target_child_id', 'corpus_name', 'target_child_age',
                          'gloss', 'part_of_speech', 'stem','target_child_sex')
-length(unique(three2_year_olds_tokens_df$target_child_id)) #48 after filtering
+length(unique(three2_year_olds_tokens_df$target_child_id)) #55 before filtering by POS
+length(three_year_olds_tokens_df$gloss) #1047
 
 #filter by pos
 target <- c("n", "v", "adj")
 three2_year_olds_tokens_df <- filter(three2_year_olds_tokens_df, part_of_speech %in% target) #872 rows
-length(unique(three2_year_olds_tokens_df$target_child_id))
-length(three2_year_olds_tokens_df$target_child_id)
+length(unique(three2_year_olds_tokens_df$target_child_id)) #48 after filtering by POS
+length(three2_year_olds_tokens_df$target_child_id) # for later comparison with three_full.
+
+#check_three <- three_year_olds_tokens_df
+#check_three <- filter(check_three, part_of_speech %in% target)
+#length(check_three$gloss) # 881, matches three_full count. We're using length, because it is the same
+# thing as getting the count for it. 
 
 #renaming gloss to form
 names(three2_year_olds_tokens_df)[names(three2_year_olds_tokens_df) == "gloss"] <- "form"
@@ -308,21 +314,22 @@ ids_for_threes <- unique(three2_year_olds_tokens_df$target_child_id)
 ids_for_threes <- as.data.frame(ids_for_threes)
 length(unique(ids_for_threes$ids_for_threes)) #48 unique ids
 
-#generate 82 instances of an ID
-three_many_ids <- ids_for_threes %>% slice(rep(1:n(), each = 82))
-length(three_many_ids$ids_for_threes) #3936
+#generate 90 instances of an ID (n # of participants x f # of words )
+three_many_ids <- ids_for_threes %>% slice(rep(1:n(), each = 90))
+length(three_many_ids$ids_for_threes) #4320
 names(three_many_ids)[names(three_many_ids) == "ids_for_threes"] <- "unique_ids"
 three_many_ids
 
-#generate 54 instances of sym_words
+#generate 48 instances of sym_words - because we want the ids and sym words to have the same # of rows before
+# we merge them together.
 n = 48
 threes_many_syms <- do.call("rbind", replicate(n, sym_list, simplify = FALSE))
-length(threes_many_syms$form) #3936
+length(threes_many_syms$form) #4320
 
 
 # Merge many IDS with many syms
-three_sym_and_id <- cbind(threes_many_syms, target_child_id = three_many_ids$unique_ids)#4428
-length(three_sym_and_id$target_child_id) #3936
+three_sym_and_id <- cbind(threes_many_syms, target_child_id = three_many_ids$unique_ids)#4320
+length(three_sym_and_id$target_child_id) #4320
 
 
 #merging three_sym_and_id with three_year_olds_token
@@ -333,31 +340,35 @@ three2_year_olds_tokens_df$target_child_age <-  replace(three2_year_olds_tokens_
                                                       three2_year_olds_tokens_df$target_child_age <= 47.99, 3)
 
 
-#before running this change the age of all children to 3! and then merge
+#before running this change the age of all children to 3! and then merge.
+# We are doing this to get a count for the words that are recorded. So that when we merge with
+# the words from sym_list all the words not produced, receive an NA, which we later change to 0.
 detach(package:plyr)
 three_counts <- three2_year_olds_tokens_df %>% group_by(form, target_child_id, target_child_age, target_child_sex) %>%
   summarize(count = sum(unique(length(form))))
 
 
 three_counts <- three_counts %>% arrange(target_child_id)
-length(unique(three_counts$target_child_id))
+length(unique(three_counts$target_child_id)) #48 good.
 
-length(three_counts$form) #243
-length(three_sym_and_id$form) #3936
+length(three_counts$form) #250
+length(three_sym_and_id$form) #4320
 
 three_full <- merge(three_counts, three_sym_and_id, all = TRUE)
 three_full <- three_full %>% arrange(target_child_id)
 
 length(unique(three_full$form))
 
-length(three_full$form) #3936
+length(three_full$form) #4320
 
-#now go in and change nas for age to 3 and nas for count to 0
+#now go in and change NAs for age to 3 and NAs for count to 0
 
 three_full$count[is.na(three_full$count)] <- 0
 three_full$target_child_age[is.na(three_full$target_child_age)] <- 3
-sum(three_full$count) #872! Yes. Matches three_year_olds_tokendf
-length(unique(three_full$form))
+sum(three_full$count) #881 does it match with three_year_olds_tokendf?
+length(three_year_olds_tokens_df$gloss) #1047, before the filtering. 881 aftering filtering POs.
+
+length(unique(three_full$form)) #90
 
 # *********************************************************************************************************************
 
@@ -373,13 +384,13 @@ four_year_olds_tokens_df <- four_year_olds_tokens_df %>% arrange(target_child_id
 
 four2_year_olds_tokens_df <- select(four_year_olds_tokens_df, 'target_child_id', 'corpus_name', 'target_child_age',
                                     'gloss', 'part_of_speech','target_child_sex','stem')
-length(unique(four_year_olds_tokens_df$target_child_id)) #63 unique before filtering , x after filtering
+length(unique(four_year_olds_tokens_df$target_child_id)) #63 unique before filtering
 
 #filter by pos
 target <- c("n", "v", "adj")
 four2_year_olds_tokens_df <- filter(four2_year_olds_tokens_df, part_of_speech %in% target) #872 rows
 length(unique(four2_year_olds_tokens_df$target_child_id)) #62 unique after filtering
-length(four2_year_olds_tokens_df$target_child_id) #1196 unique tokens after filtering? - Yes
+length(four2_year_olds_tokens_df$target_child_id) #1214 - for later comparison against four_full
 
 #renaming gloss to form
 names(four2_year_olds_tokens_df)[names(four2_year_olds_tokens_df) == "gloss"] <- "form"
@@ -391,20 +402,20 @@ ids_for_four <- unique(four2_year_olds_tokens_df$target_child_id)
 ids_for_four <- as.data.frame(ids_for_four)
 length(unique(ids_for_four$ids_for_four)) #62 unique ids
 
-#generate 82 instances of an ID
-four_many_ids <- ids_for_four %>% slice(rep(1:n(), each = 82))
-length(four_many_ids$ids_for_four) #5084
+#generate 90 instances of an ID
+four_many_ids <- ids_for_four %>% slice(rep(1:n(), each = 90))
+length(four_many_ids$ids_for_four) #5580
 names(four_many_ids)[names(four_many_ids) == "ids_for_four"] <- "unique_ids"
 four_many_ids
 
 #generate 62 (for each unique id) instances of sym_words
 n = 62
 four_many_syms <- do.call("rbind", replicate(n, sym_list, simplify = FALSE))
-length(four_many_syms$form) #5084
+length(four_many_syms$form) #5580
 
 # Merge many IDS with many syms
 four_sym_and_id <- cbind(four_many_syms, target_child_id = four_many_ids$unique_ids)
-length(four_sym_and_id$target_child_id) #5084
+length(four_sym_and_id$target_child_id) #5580
 
 #merging three_sym_and_id with three_year_olds_token
 
@@ -424,9 +435,9 @@ four_counts <- four_counts %>% arrange(target_child_id)
 
 length(unique(four_counts$target_child_id)) #62
 
-length(four_counts$target_child_id) #367
-length(four_sym_and_id$form)#5084
-length(unique(four_sym_and_id$target_child_id))
+length(four_counts$target_child_id) #379
+length(four_sym_and_id$form)#5580
+length(unique(four_sym_and_id$target_child_id)) #62
 
 #stem_dropped <- subset(four_sym_and_id, select = -c(stem))
 
@@ -436,7 +447,7 @@ four_full <- merge(four_counts, four_sym_and_id, all = TRUE) #Original
 
 
 # remove row 4589 ************************************************************************
-four_full<- four_full[-c(4589),]
+four_full<- four_full[-c(5085),] #"removes thought"
 
 
 
@@ -446,23 +457,20 @@ four_full<- four_full[-c(4589),]
 # nope, still one extra row.
 #four_full <- merge(sex_dropped, stem_dropped, all = TRUE)
 
-length(unique(four_full$form)) #82
+length(unique(four_full$form)) #90
 length(unique(four_full$target_child_id)) #62
 
-length(four_full$target_child_id) #5084
+length(four_full$target_child_id) #5580
 four_full <- four_full %>% arrange(target_child_id)
 
 #now go in and change nas for age to 4 and nas for count to 0
 
 four_full$count[is.na(four_full$count)] <- 0
 four_full$target_child_age[is.na(four_full$target_child_age)] <- 4
-sum(four_full$count) #1196 Yes. Matches four_year_olds_tokendf, ** 
-#it should be 1195 because 'thought' was in four_year_old_token
+sum(four_full$count) #1213 Yes. Matches four_year_olds_tokendf, ** 
+#it should be 1214 because 'thought' was in four_year_old_token.
 
-
-sum(four_counts$count)
-sum(length(four2_year_olds_tokens_df$form)) #1196 because this is without removing 'thought.'
-#why is there one more row?
+sum(length(four2_year_olds_tokens_df$form)) #1214 because this is without removing 'thought.'
 
 #length(four_full$form == "friend")
 #count(four_full[1:100,], vars = "form")
@@ -481,7 +489,7 @@ new <- rbind(three_full, four_full)
 sum(four_full$count)
 sum(three_full$count)
 #length(three_year_olds_tokens_df$form)
-sum(new$count) #2067
+sum(new$count) #2094
 # making sure the count for types is the same as the token length.
 
 four_year_olds_types2_df <- get_types(
@@ -491,17 +499,17 @@ four_year_olds_types2_df <- get_types(
   type = sym_list$form
 )
 #types count
-sum(four_year_olds_types2_df$count) #1555
+sum(four_year_olds_types2_df$count) #1583
 #tokens count
-sum(length(four_year_olds_tokens_df$gloss)) #1555
+sum(length(four_year_olds_tokens_df$gloss)) #1583
 
 #after filtering pos - correct
-sum(length(four2_year_olds_tokens_df$form)) #1196 again, because this one still has 'thought' in it.
-# four_full is 1195
+sum(length(four2_year_olds_tokens_df$form)) #1214 again, because this one still has 'thought' in it.
+# four_full is 1213
 
-sum(three_full$count) #872
+sum(three_full$count) #881
 
-sum(new$count) # 2067. goood 872 + 1195.
+sum(new$count) # 2094. goood 1213 + 881.
 
 three_year_olds_types2_df <- get_types(
   collection = "Eng-NA",
@@ -510,9 +518,9 @@ three_year_olds_types2_df <- get_types(
   type = sym_list$form
 )
 #types count
-sum(three_year_olds_types2_df$count) #1037
+sum(three_year_olds_types2_df$count) #1047
 #tokens count
-sum(length(three_year_olds_tokens_df$form)) #872 (after filtering?)
+(length(three2_year_olds_tokens_df$form)) #881 after filtering.
 
 test_three <- get_tokens(
   collection = "Eng-NA",
@@ -521,7 +529,7 @@ test_three <- get_tokens(
   token = sym_list$form
 )
 
-sum(length(test_three$gloss)) #yes 1037. which means that after filtering, we lose about 165 tokens.
+(length(test_three$gloss)) #yes 1047. 1047 - 881 which means that after filtering, we lose about 166 tokens.
 
 # ************************************* COLLAPSING ********************************************
 col_new <- new %>% group_by(target_child_id, stem) %>%
@@ -530,6 +538,8 @@ col_new <- new %>% group_by(target_child_id, stem) %>%
 sumcounts <- tapply(col_new$counts, col_new$target_child_id, sum)
 sumcounts <- as.data.frame(sumcounts)
 #How many kids do we have?
+length(unique(four_full$target_child_id)) #62
+length(unique(three_full$target_child_id)) #48 - 110 total
 length(unique(col_new$target_child_id)) #96 children
 
 #plyr option
@@ -654,11 +664,12 @@ length(unique(col_new$target_child_id))
 repeats <- four_full$target_child_id[four_full$target_child_id %in% three_full$target_child_id]
 length(unique(repeats))
 repeats <- unique(repeats)
+repeats
 ## In three_full and four_full you are getting 110 children. But when you rbind them to create df 'new' you get 96 children because some of the 3 year olds turned 4 and are also in
 # the 4 year old df - with the same id. So rbind is just merging them together. there are 14 children that have data in both three_full and four_full. So you really
 #The question is, how do we treat these date? Do we assign these children to only one age group or delete them from one group for the analysis?
 # keep only the children from 3 year old group.
-
+## **************************************************Dealing with repeats************************************
 four_full # 5084 obs before removing the 14 children that are repeats.
 four_full <- four_full[!(four_full$target_child_id == repeats),]
 
@@ -672,4 +683,43 @@ four2_full <- four_full
 length(unique(four2_full$target_child_id)) #62
 #four2_full <- subset(four_full, target_child_id != repeats2)
 four2_full <- four2_full[! four2_full$target_child_id %in% repeats,]
-length(unique(four2_full$target_child_id)) #14 something went wrong. 62 - 14 should equal 48
+length(unique(four2_full$target_child_id)) #48
+
+master_df <- rbind(three_full, four2_full)
+length(three_full$form)#4320
+length(four2_full$form)#4320
+length(unique(three_full$target_child_id))
+length(unique(four2_full$target_child_id))
+length(unique(four_full$target_child_id))
+
+#checking to see if they are no more repeats
+thetruth <- four2_full[four2_full$target_child_id %in% three_full$target_child_id,]
+four_true<-unique(four2_full$target_child_id)
+three_true <-unique(three_full$target_child_id)
+four_true == three_true
+
+# collapsing here again
+detach(package:plyr)
+col_new <- master_df %>% group_by(target_child_id, stem) %>%
+  summarize(counts = sum(count))
+
+length(unique(four2_full$stem)) #25 thanks god.
+# well continue this tomorrow...col_new is the only one Alon is interested in.
+# Add proportions to this, means, and averages for each row.
+
+#create a CSV here
+
+#not sure if we need the stuff below.
+
+sumcounts <- tapply(col_new$counts, col_new$target_child_id, sum)
+sumcounts <- as.data.frame(sumcounts)
+#How many kids do we have?
+length(unique(four_full$target_child_id)) #62
+length(unique(three_full$target_child_id)) #48 - 110 total
+length(unique(col_new$target_child_id)) #96 children
+
+#plyr option
+library(plyr)
+sumcounts2 <- ddply(col_new, .(target_child_id), summarise, totalcount = sum(col_new$count))
+
+write.csv(new, "C:\\Users\\abima\\Desktop\\corp-an\\all_tokens.csv")
