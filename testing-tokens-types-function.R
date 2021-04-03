@@ -14,9 +14,14 @@ setwd("C:\\Users\\abima\\Desktop\\corp-an")
 getwd()
 
 sym_list <- read.csv(file = "C:\\Users\\abima\\Desktop\\corp-an\\sym_list3.csv", header = TRUE)
+sym_list$X <- NULL
+sym_list$X.1 <- NULL
+sym_list$X.2 <- NULL
+
 sym_list
 
 sym_list_pos <- read.csv(file = "C:\\Users\\abima\\Desktop\\corp-an\\sym_list3_pos_no_gerund.csv", header = TRUE)
+sym_list_pos
 
 #now to get a clean token df for 3 year olds only.
 three_year_olds_tokens_df <- get_tokens(
@@ -34,13 +39,15 @@ length(unique(three2_year_olds_tokens_df$target_child_id)) #55 before filtering 
 length(three_year_olds_tokens_df$gloss) #1047
 names(three2_year_olds_tokens_df)[names(three2_year_olds_tokens_df) == "part_of_speech"] <- "pos"
 names(three2_year_olds_tokens_df)[names(three2_year_olds_tokens_df) == "gloss"] <- "form"
+three2_year_olds_tokens_df
 
 #filter by pos - setting up the column we need.
-sym_list_pos$formpos <- paste(sym_list_pos$form, sym_list_pos$pos)
+sym_list_pos_paste <- sym_list_pos
+sym_list_pos_paste$formpos <- paste(sym_list_pos_paste$form, sym_list_pos_paste$pos)
 three2_year_olds_tokens_df$formpos <- paste(three2_year_olds_tokens_df$form, three2_year_olds_tokens_df$pos)
 
 three2_year_olds_tokens_df_filtered_pos <- three2_year_olds_tokens_df %>%
-  filter(formpos %in% sym_list_pos$formpos)
+  filter(formpos %in% sym_list_pos_paste$formpos)
 length(three2_year_olds_tokens_df_filtered_pos$target_child_id) #745 it worked!
 
 length(unique(three2_year_olds_tokens_df_filtered_pos$target_child_id)) #46 after filtering by POS
@@ -51,8 +58,8 @@ ids_for_threes <- unique(three2_year_olds_tokens_df_filtered_pos$target_child_id
 ids_for_threes <- as.data.frame(ids_for_threes)
 length(unique(ids_for_threes$ids_for_threes)) #46 unique ids
 
-#generate 90 instances of an ID (n # of participants x f # of words )
-# we are trying to create a dataframe that has 4,140 rows
+# generate 90 instances of an ID (n # of participants x f # of forms )
+# we are trying to create a dataframe that has 4,140 rows (46 * 90)
 three_many_ids <- ids_for_threes %>% slice(rep(1:n(), each = 90))
 length(three_many_ids$ids_for_threes) #4140
 names(three_many_ids)[names(three_many_ids) == "ids_for_threes"] <- "unique_ids"
@@ -74,20 +81,21 @@ three2_year_olds_tokens_df_filtered_pos$target_child_age <-  replace(three2_year
                                                                      three2_year_olds_tokens_df_filtered_pos$target_child_age >= 36.00 &
                                                                        three2_year_olds_tokens_df_filtered_pos$target_child_age <= 47.99, 3)
 
+#you can use three_2_year_olds_tokens_df_filtered_pos to extract sentence frames for three year olds Using utterance_id
 
 #before running this change the age of all children to 3! and then merge.
-# We are doing this to get a count for the words that are recorded. So that when we merge with
+# We are doing this to get a count for the words that are not~ recorded. So that when we merge with
 # the words from sym_list all the words not produced, receive an NA, which we later change to 0.
 detach(package:plyr)
 three_counts <- three2_year_olds_tokens_df_filtered_pos %>% group_by(form, target_child_id, target_child_age, target_child_sex) %>%
-  summarize(count = sum(unique(length(form))))
+  summarize(count = sum(unique(length(form)))) #244
 #do we need utterance id?
 length(unique(three_counts$target_child_id)) #46
 
 three_counts <- three_counts %>% arrange(target_child_id)
 length(unique(three_counts$target_child_id)) #46 good.
 
-length(three_counts$form) #224
+length(three_counts$form) #224, because this only includes counts for words that were produced by the child.Can we use this to plot data for people that have more than one count?
 length(three_sym_and_id$form) #4140
 
 three_full <- merge(three_counts, three_sym_and_id, all = TRUE)
@@ -101,12 +109,123 @@ length(three_full$form) #4140
 
 three_full$count[is.na(three_full$count)] <- 0
 three_full$target_child_age[is.na(three_full$target_child_age)] <- 3
-sum(three_full$count) #745 does it match with three_year_olds_tokendf?
+sum(three_full$count) #745 does it match with three_year_olds_tokendf? YUP.
 length(three2_year_olds_tokens_df_filtered_pos$form) #745 aftering filtering POs.
 
 length(unique(three_full$form)) #90
 
-# *********************************************************************************************************************
+#now lets get proportions and such for three year olds.
+length(three_full$form)#4140
+length(unique(three_full$target_child_id))#46
+
+# collpasing here for 3 year olds.
+detach(package:plyr)
+three_col_new <- three_full %>% group_by(target_child_id, stem) %>%
+  summarize(counts = sum(count))
+length(unique(three_col_new$target_child_id)) #46
+length(three_col_new$target_child_id) #1150
+
+#speaker stats for three year olds.*********************************************************************************************************************
+speaker_stats_three <- get_speaker_statistics(
+  collection = "Eng-NA",
+  role = "target_child",
+  age = c(36, 48),
+)
+
+sub_speaker_stats_three <- speaker_stats_three
+
+sub_speaker_stats_three <- select(sub_speaker_stats_three, "target_child_id", "num_tokens")
+
+#to get only tokens for the children in our data.
+#sub_speaker_stats_three2 <- filter(sub_speaker_stats_three, target_child_id %in% col_new$target_child_id)
+sub_speaker_stats_three2 <- filter(sub_speaker_stats_three, target_child_id %in% three_full$target_child_id)
+
+length(unique(sub_speaker_stats_three2$target_child_id)) # 46, so potentially no repeats
+#sub_speaker_stats_three2 is df we want to use when we check for repeats. 
+ids_for_sub_speaker_stats_three2 <- unique(sub_speaker_stats_three2$target_child_id) # list of unique ids in ids_for_sub_speaker_stats_three2 
+ids_for_sub_speaker_stats_three2_df <- as.data.frame(ids_for_sub_speaker_stats_three2)# as a df
+
+length(sub_speaker_stats_three2$target_child_id)#use sub_speaker_stats_three2 if you want to create a df with the sum of tokens per child for 3 year olds
+
+#getting the sum of tokens per child for 3 year olds.
+three_speaker_tokens_for_col_new <- aggregate(sub_speaker_stats_three2$num_tokens, by=list(sub_speaker_stats_three2$target_child_id), sum)
+length(unique(three_speaker_tokens_for_col_new$Group.1)) #46
+
+#rename the columns for 3 year olds.
+names(three_speaker_tokens_for_col_new)[names(three_speaker_tokens_for_col_new) == "x"] <- "tokens" 
+names(three_speaker_tokens_for_col_new)[names(three_speaker_tokens_for_col_new) == "Group.1"] <- "target_child_id_2" 
+
+#3 year olds
+three_speaker_tokens_for_col_new <- three_speaker_tokens_for_col_new %>% arrange(target_child_id_2)
+
+#3 year olds
+three_speaker_tokens_for_col_new <- three_speaker_tokens_for_col_new %>% slice(rep(1:n(), each = 25))
+length(three_speaker_tokens_for_col_new$tokens) #1150
+length(three_col_new$counts) #1150
+sum(three_col_new$counts) #745
+
+#3 year olds
+three_collapsed_stem_prop <- cbind(three_col_new, three_speaker_tokens_for_col_new)
+
+three_collapsed_stem_prop$target_child_id_2 <- NULL
+
+three_collapsed_stem_prop2 <- transform(three_collapsed_stem_prop, prop = counts / tokens)
+
+#sum for each count per child.
+three_child_sum <- aggregate(three_collapsed_stem_prop2$count, by=list(three_collapsed_stem_prop2$target_child_id), sum)
+
+# then, mean for each child.
+sum(three_collapsed_stem_prop2$counts) #... , so you would do n (that child's sum, divided by 1583)
+
+#sum and mean
+three_child_mean <- transform(child_sum, mean = x / ...)
+names(three_child_mean)[names(three_child_mean) == "x"] <- "sum" 
+names(three_child_mean)[names(three_child_mean) == "Group.1"] <- "target_child_id"
+#then slice this 25 times for each stem, and bind it to collapsed_stem_prop2, make a new df full_df just in case.
+three_child_mean_for_df <- three_child_mean %>% slice(rep(1:n(), each = 25)) #n here should be equal to the number of stems
+three_collapsed_stem_prop3 <- cbind(three_collapsed_stem_prop2, three_child_mean_for_df) #collapsed_stem_prop3 has sum and mean added as another column to collapsed_stem_prop2
+
+# whats the total number of tokens? - use speaker_tokens_for_col_new
+sum(three_speaker_tokens_for_col_new$tokens) # 920,240
+
+# sum prop column for each child
+three_prop_mean <- transform(three_collapsed_stem_prop2, prop_mean = prop / 920240)
+sum(three_collapsed_stem_prop2$prop)
+three_prop_mean2 <- transform(three_collapsed_stem_prop2, prop_mean = prop / 0.16901) #this number comes from summing the prop of collapsed_stem_prop2 (code above)
+
+#how to initiate a package after detaching it?
+#mean_prop <- ddply(collapsed_stem_prop2) #what does this even do?
+
+
+write.csv(three_collapsed_stem_prop2, "C:\\Users\\abima\\Desktop\\corp-an\\three_collapsed_stem_prop2.csv")
+
+
+three_sumdata <- ddply(three_collapsed_stem_prop2, .(stem), summarise, sumTokens = sum(counts), meanTokens = mean(counts), minTokens = min(counts), maxTokens = max(counts), stdTokens = sd(counts), meanProp = mean(prop))
+write.csv(three_sumdata, "C:\\Users\\abima\\Desktop\\corp-an\\three_sumdata.csv")
+
+#sumdata <- read.csv(file = "C:\\Users\\abima\\Desktop\\corp-an\\sumdata.csv", header = TRUE)
+three_sumdata2 <- three_sumdata
+
+three_col_stem_prop <- three_collapsed_stem_prop2
+level_order <- factor(three_col_stem_prop$stem, level = c("combine", "chat", "compete", 
+                                                    "equal", "marry", "match", 
+                                                    "meet", "same", "similar",
+                                                    "trade", "fight", "separate",
+                                                    "differ", "friend",  "connect", "attach", "argue",
+                                                    "split", "kiss",
+                                                    "hug", "disagree",
+                                                    "agree",
+                                                    "touch", "join", "bump"))
+
+plot <- ggplot(three_col_stem_prop, aes(x=level_order, y=counts)) +
+  geom_boxplot() + 
+  stat_summary(fun = mean, geom="point", color = "red", size=2) +
+  xlab("stem")#+
+#ylim(0,20)
+plot + theme(legend.position = "none")
+#ggsave("ggplot_categoryv2_zoomed.png", width = 15)
+
+# *****************************************************************************************************************************************************
 
 #now to get a clean token df for 4 year olds only.
 four_year_olds_tokens_df <- get_tokens(
@@ -188,17 +307,6 @@ length(four_full$target_child_id) #5400
 #four_full <- merge(four_counts, stem_dropped, all = TRUE)
 
 
-# remove row 4589 ************************************************************************
-#four_full<- four_full[-c(5085),] #"removes thought"
-
-
-
-# testing whether sex is adding an extra row or age.
-#sex_dropped <- subset(four_counts, select = -c(target_child_sex,target_child_age))
-
-# nope, still one extra row.
-#four_full <- merge(sex_dropped, stem_dropped, all = TRUE)
-
 length(unique(four_full$form)) #90
 length(unique(four_full$target_child_id)) #60
 
@@ -268,13 +376,6 @@ length(unique(three_full$target_child_id)) #46
 #write.csv(col_new, "C:\\Users\\abima\\Desktop\\corp-an\\collapsed_stems.csv")
 write.csv(col_new, "C:\\Users\\abima\\Desktop\\corp-an\\col_new.csv")
 
-# collpasing here for 3 year olds.
-detach(package:plyr)
-three_col_new <- three_full %>% group_by(target_child_id, stem) %>%
-  summarize(counts = sum(count))
-length(unique(three_col_new$target_child_id)) #46
-length(three_col_new$target_child_id) #1150
-
 # collapsing here for 4 year olds.
 detach(package:plyr)
 four_col_new <- four2_full %>% group_by(target_child_id, stem) %>%
@@ -284,25 +385,7 @@ length(four_col_new$target_child_id) #1150
 
 
 #*********************************************************************************************************************************************************
-#speaker stats for three year olds.*********************************************************************************************************************
-speaker_stats_three <- get_speaker_statistics(
-  collection = "Eng-NA",
-  role = "target_child",
-  age = c(36, 48),
-)
 
-sub_speaker_stats_three <- speaker_stats_three
-
-sub_speaker_stats_three <- select(sub_speaker_stats_three, "target_child_id", "num_tokens")
-
-#to get only tokens for the children in our data.
-#sub_speaker_stats_three2 <- filter(sub_speaker_stats_three, target_child_id %in% col_new$target_child_id)
-sub_speaker_stats_three2 <- filter(sub_speaker_stats_three, target_child_id %in% three_full$target_child_id)
-
-length(unique(sub_speaker_stats_three2$target_child_id)) # 46, so potentially no repeats
-#sub_speaker_stats_three2 is df we want to use when we check for repeats. 
-ids_for_sub_speaker_stats_three2 <- unique(sub_speaker_stats_three2$target_child_id) # list of unique ids in ids_for_sub_speaker_stats_three2 
-ids_for_sub_speaker_stats_three2_df <- as.data.frame(ids_for_sub_speaker_stats_three2)# as a df
 
 #speaker stats for four year olds. **********************************************************************************************************************
 speaker_stats_four <- get_speaker_statistics(
@@ -340,9 +423,6 @@ length(unique(speaker_tokens_for_col_new$Group.1)) # 92
 four_speaker_tokens_for_col_new <- aggregate(sub_speaker_stats_four2$num_tokens, by=list(sub_speaker_stats_four2$target_child_id), sum)
 length(unique(four_speaker_tokens_for_col_new$Group.1)) #46
 
-#getting the sum of tokens per child for 3 year olds.
-three_speaker_tokens_for_col_new <- aggregate(sub_speaker_stats_three2$num_tokens, by=list(sub_speaker_stats_three2$target_child_id), sum)
-length(unique(three_speaker_tokens_for_col_new$Group.1)) #46
 
 #rename the columns for combined.
 names(speaker_tokens_for_col_new)[names(speaker_tokens_for_col_new) == "x"] <- "tokens" 
@@ -352,9 +432,7 @@ names(speaker_tokens_for_col_new)[names(speaker_tokens_for_col_new) == "Group.1"
 names(four_speaker_tokens_for_col_new)[names(four_speaker_tokens_for_col_new) == "x"] <- "tokens" 
 names(four_speaker_tokens_for_col_new)[names(four_speaker_tokens_for_col_new) == "Group.1"] <- "target_child_id_2" 
 
-#rename the columns for 3 year olds.
-names(three_speaker_tokens_for_col_new)[names(three_speaker_tokens_for_col_new) == "x"] <- "tokens" 
-names(three_speaker_tokens_for_col_new)[names(three_speaker_tokens_for_col_new) == "Group.1"] <- "target_child_id_2" 
+
 
 
 #************************************************************************************************************************************************************
@@ -364,8 +442,7 @@ speaker_tokens_for_col_new <- speaker_tokens_for_col_new %>% arrange(target_chil
 #4 year olds
 four_speaker_tokens_for_col_new <- four_speaker_tokens_for_col_new %>% arrange(target_child_id_2)
 
-#3 year olds
-three_speaker_tokens_for_col_new <- three_speaker_tokens_for_col_new %>% arrange(target_child_id_2)
+
 
 #combined
 speaker_tokens_for_col_new_sliced <- speaker_tokens_for_col_new %>% slice(rep(1:n(), each = 25)) #n here should be equal to the number of stems
@@ -381,14 +458,17 @@ length(four_speaker_tokens_for_col_new_sliced$tokens) #1150, 46 children x 25 st
 length(four_col_new$counts) #1150
 sum(four_col_new$counts) #661
 
-#3 year olds
-three_speaker_tokens_for_col_new <- three_speaker_tokens_for_col_new %>% slice(rep(1:n(), each = 25))
-length(three_speaker_tokens_for_col_new$tokens) #1150
-length(three_col_new$counts) #1150
-sum(three_col_new$counts) #745
 
-#stopped here - need to do this for 3 and 4 separaetly. not this bottom code trhough.
+
+#stopped here - need to do this for 3 and 4 separately. not this bottom code though.
+#combined
 collapsed_stem_prop <- cbind(col_new, speaker_tokens_for_col_new_sliced)
+
+#4 year olds 
+four_collapsed_stem_prop <- cbind(four_col_new, four_speaker_tokens_for_col_new_sliced)
+
+#3 year olds
+three_collapsed_stem_prop <- cbind(three_col_new, three_speaker_tokens_for_col_new)
 
 collapsed_stem_prop$target_child_id_2 <- NULL
 
