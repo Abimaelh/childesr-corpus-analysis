@@ -125,6 +125,8 @@ three_col_new <- three_full %>% group_by(target_child_id, stem) %>%
 length(unique(three_col_new$target_child_id)) #46
 length(three_col_new$target_child_id) #1150
 
+write.csv(three_col_new, "C:\\Users\\abima\\Desktop\\corp-an\\threes\\three_col_new.csv")
+
 #speaker stats for three year olds.*********************************************************************************************************************
 speaker_stats_three <- get_speaker_statistics(
   collection = "Eng-NA",
@@ -146,6 +148,7 @@ ids_for_sub_speaker_stats_three2 <- unique(sub_speaker_stats_three2$target_child
 ids_for_sub_speaker_stats_three2_df <- as.data.frame(ids_for_sub_speaker_stats_three2)# as a df
 
 length(sub_speaker_stats_three2$target_child_id)#use sub_speaker_stats_three2 if you want to create a df with the sum of tokens per child for 3 year olds
+#822 is that reasonable.
 
 #getting the sum of tokens per child for 3 year olds.
 three_speaker_tokens_for_col_new <- aggregate(sub_speaker_stats_three2$num_tokens, by=list(sub_speaker_stats_three2$target_child_id), sum)
@@ -158,7 +161,7 @@ names(three_speaker_tokens_for_col_new)[names(three_speaker_tokens_for_col_new) 
 #3 year olds
 three_speaker_tokens_for_col_new <- three_speaker_tokens_for_col_new %>% arrange(target_child_id_2)
 
-#3 year olds
+#3 year olds, n = to number of stems.
 three_speaker_tokens_for_col_new <- three_speaker_tokens_for_col_new %>% slice(rep(1:n(), each = 25))
 length(three_speaker_tokens_for_col_new$tokens) #1150
 length(three_col_new$counts) #1150
@@ -175,10 +178,11 @@ three_collapsed_stem_prop2 <- transform(three_collapsed_stem_prop, prop = counts
 three_child_sum <- aggregate(three_collapsed_stem_prop2$count, by=list(three_collapsed_stem_prop2$target_child_id), sum)
 
 # then, mean for each child.
-sum(three_collapsed_stem_prop2$counts) #... , so you would do n (that child's sum, divided by 1583)
+sum(three_collapsed_stem_prop2$counts) #... , so you would do n (that child's sum, divided by 745?)
 
 #sum and mean
-three_child_mean <- transform(child_sum, mean = x / ...)
+library(plyr)
+three_child_mean <- transform(three_child_sum, mean = x / 745)
 names(three_child_mean)[names(three_child_mean) == "x"] <- "sum" 
 names(three_child_mean)[names(three_child_mean) == "Group.1"] <- "target_child_id"
 #then slice this 25 times for each stem, and bind it to collapsed_stem_prop2, make a new df full_df just in case.
@@ -186,22 +190,28 @@ three_child_mean_for_df <- three_child_mean %>% slice(rep(1:n(), each = 25)) #n 
 three_collapsed_stem_prop3 <- cbind(three_collapsed_stem_prop2, three_child_mean_for_df) #collapsed_stem_prop3 has sum and mean added as another column to collapsed_stem_prop2
 
 # whats the total number of tokens? - use speaker_tokens_for_col_new
-sum(three_speaker_tokens_for_col_new$tokens) # 920,240
+#sum(three_speaker_tokens_for_col_new$tokens) # 14459725. This is summing all the repeats. # too big.
 
-# sum prop column for each child
-three_prop_mean <- transform(three_collapsed_stem_prop2, prop_mean = prop / 920240)
+#for prop mean denominator. Create a new variable from speaker_tokens_for_col_new before slicing 25 times.
+three_speaker_tokens <- aggregate(sub_speaker_stats_three2$num_tokens, by=list(sub_speaker_stats_three2$target_child_id), sum)
+length(unique(three_speaker_tokens$Group.1)) #46
+sum(three_speaker_tokens$x) #578389
+
+# sum prop column for each child. Which one are we using?
+three_prop_mean <- transform(three_collapsed_stem_prop2, prop_mean = prop / 578389)
 sum(three_collapsed_stem_prop2$prop)
-three_prop_mean2 <- transform(three_collapsed_stem_prop2, prop_mean = prop / 0.16901) #this number comes from summing the prop of collapsed_stem_prop2 (code above)
+three_prop_mean2 <- transform(three_collapsed_stem_prop2, prop_mean = prop / 0.0778102) #this number comes from summing the prop of collapsed_stem_prop2 (code above)
 
 #how to initiate a package after detaching it?
 #mean_prop <- ddply(collapsed_stem_prop2) #what does this even do?
 
 
-write.csv(three_collapsed_stem_prop2, "C:\\Users\\abima\\Desktop\\corp-an\\three_collapsed_stem_prop2.csv")
+write.csv(three_collapsed_stem_prop2, "C:\\Users\\abima\\Desktop\\corp-an\\threes\\three_collapsed_stem_prop2.csv")
+write.csv(three_prop_mean, "C:\\Users\\abima\\Desktop\\corp-an\\threes\\three_prop_mean.csv")
 
-
+library(plyr)
 three_sumdata <- ddply(three_collapsed_stem_prop2, .(stem), summarise, sumTokens = sum(counts), meanTokens = mean(counts), minTokens = min(counts), maxTokens = max(counts), stdTokens = sd(counts), meanProp = mean(prop))
-write.csv(three_sumdata, "C:\\Users\\abima\\Desktop\\corp-an\\three_sumdata.csv")
+write.csv(three_sumdata, "C:\\Users\\abima\\Desktop\\corp-an\\threes\\three_sumdata.csv")
 
 #sumdata <- read.csv(file = "C:\\Users\\abima\\Desktop\\corp-an\\sumdata.csv", header = TRUE)
 three_sumdata2 <- three_sumdata
@@ -220,10 +230,47 @@ level_order <- factor(three_col_stem_prop$stem, level = c("combine", "chat", "co
 plot <- ggplot(three_col_stem_prop, aes(x=level_order, y=counts)) +
   geom_boxplot() + 
   stat_summary(fun = mean, geom="point", color = "red", size=2) +
-  xlab("stem")#+
-#ylim(0,20)
+  xlab("stem")+
+  ylim(0,20)
 plot + theme(legend.position = "none")
-#ggsave("ggplot_categoryv2_zoomed.png", width = 15)
+ggsave("threes_zoomed.png", width = 15)
+
+# for plotting stems with a count greater than 0.
+three_more_than_one <- three_collapsed_stem_prop2 %>% filter(counts > 0)
+plot <- ggplot(three_more_than_one, aes(x=stem, y=counts)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = 'point', color = "red", size = 2) +
+  xlab("stem")+
+  ylim(0,20)
+plot + theme(legend.position = 'none')
+ggsave('threes_more_than_one_zoomed.png', width = 15)
+
+#for plotting # of tokens in their corpora
+three_child_corpora_tokes <- three_speaker_tokens
+names(three_child_corpora_tokes)[names(three_child_corpora_tokes) == "x"] <- "tokens" 
+names(three_child_corpora_tokes)[names(three_child_corpora_tokes) == "Group.1"] <- "target_child_id"
+three_ids_tokes <- factor(three_child_corpora_tokes$target_child_id)
+plot <- ggplot(three_child_corpora_tokes, aes(x=three_ids_tokes, y=tokens)) +
+  geom_point() +
+  xlab("child ids")+
+  ylab('tokens')
+plot + theme(legend.position = 'none')
+ggsave('threes_child_corpora_tokes.png', width = 15)
+
+# SENTENCE FRAMES FOR 3 year olds
+three_ut <- get_utterances(
+  collection = "Eng-NA",
+  role = "target_child",
+  age = c(36,48)
+)
+
+three_ut_filtered <- filter(three_ut, target_child_id %in% three_full$target_child_id)
+length(unique(three_ut_filtered$target_child_id))
+
+
+three_ut_filtered_sym <- filter(three_ut_filtered, id %in% three2_year_olds_tokens_df_filtered_pos$utterance_id)
+mini_three_ut_filtered_frames <- select(three_ut_filtered_sym, 'id','target_child_id','gloss','stem','type','part_of_speech', 'target_child_id')
+write.csv(mini_three_ut_filtered_frames, "C:\\Users\\abima\\Desktop\\corp-an\\threes\\mini_three_ut_filtered_frames.csv")
 
 # *****************************************************************************************************************************************************
 
@@ -248,19 +295,20 @@ names(four2_year_olds_tokens_df)[names(four2_year_olds_tokens_df) == "gloss"] <-
 #filter by pos
 #filter by pos - setting up the column we need.
 #sym_list_pos$formpos <- paste(sym_list_pos$form, sym_list_pos$pos) - Already initiated above.
+
 four2_year_olds_tokens_df$formpos <- paste(four2_year_olds_tokens_df$form, four2_year_olds_tokens_df$pos)
 
 four2_year_olds_tokens_df_filtered_pos <- four2_year_olds_tokens_df %>%
-  filter(formpos %in% sym_list_pos$formpos)
+  filter(formpos %in% sym_list_pos_paste$formpos)
 length(four2_year_olds_tokens_df_filtered_pos$target_child_id) #1167 it worked!
 
 length(unique(four2_year_olds_tokens_df_filtered_pos$target_child_id)) #60 after filtering by POS (but this still has repeats)
-length(four2_year_olds_tokens_df_filtered_pos$target_child_id) # for later comparison with three_full.#1167
+length(four2_year_olds_tokens_df_filtered_pos$target_child_id) # for later comparison with four_full.#1167
 
 #making df of unique ids in four year olds
 ids_for_four <- unique(four2_year_olds_tokens_df_filtered_pos$target_child_id)
 ids_for_four <- as.data.frame(ids_for_four)
-length(unique(ids_for_four$ids_for_four)) #60 unique ids
+length(unique(ids_for_four$ids_for_four)) #60 unique ids, with repeats
 
 #generate 90 instances of an ID
 four_many_ids <- ids_for_four %>% slice(rep(1:n(), each = 90))
@@ -288,6 +336,7 @@ four2_year_olds_tokens_df_filtered_pos$target_child_age <-  replace(four2_year_o
 
 #length(peace$target_child_id) #1196
 #before running this change the age of all children to 4! and then merge
+detach(package:plyr)
 four_counts <- four2_year_olds_tokens_df_filtered_pos %>% group_by(form, target_child_id, target_child_age, target_child_sex) %>%
   summarize(count = sum(unique(length(form))))
 
@@ -299,13 +348,9 @@ length(four_counts$target_child_id) #388
 length(four_sym_and_id$form)#5400
 length(unique(four_sym_and_id$target_child_id)) #60
 
-#stem_dropped <- subset(four_sym_and_id, select = -c(stem))
 
 four_full <- merge(four_counts, four_sym_and_id, all = TRUE) #Original 
 length(four_full$target_child_id) #5400
-# Testing whether stem is creating the extra row. NO.
-#four_full <- merge(four_counts, stem_dropped, all = TRUE)
-
 
 length(unique(four_full$form)) #90
 length(unique(four_full$target_child_id)) #60
@@ -318,7 +363,6 @@ four_full <- four_full %>% arrange(target_child_id)
 four_full$count[is.na(four_full$count)] <- 0
 four_full$target_child_age[is.na(four_full$target_child_age)] <- 4
 sum(four_full$count) #1167. Matches four_year_olds_tokendf?, ** 
-#it should be 1214 because 'thought' was in four_year_old_token.Not anymore. We are using a table to filter now. 
 
 sum(length(four2_year_olds_tokens_df_filtered_pos$form)) #1167
 
@@ -330,10 +374,24 @@ length(unique(three_full$form))
 # ***********************************************************************************************************
 
 ## **************************************************Dealing with repeats************************************
-length(unique(four_full$target_child_id)) # 5400 obs before removing the 14 children that are repeats.60!
-four_full_no_rep <- four_full[!(four_full$target_child_id == repeats),]
+three_ids <- unique(three_full$target_child_id)
+four_ids <- unique(four_full$target_child_id)
+three_ids <- as.data.frame(three_ids)
+four_ids <- as.data.frame(four_ids)
+names(three_ids)[names(three_ids) == "three_ids"] <- "target_child_id"
+names(four_ids)[names(four_ids) == "four_ids"] <- "target_child_id"
+unique(four_full$target_child_id) == unique(three_full$target_child_id)
+repeats <- four_ids %>% filter(target_child_id %in% three_ids$target_child_id)
+repeats#14 repeats
 
-length(unique(four_full_no_rep$target_child_id)) #60
+
+length(unique(four_full$target_child_id)) # 5400 obs before removing the 14 children that are repeats.60!
+four_full_no_rep <- four_full %>% filter(!target_child_id %in% three_full$target_child_id)
+
+
+
+#four_full_no_rep <- four_full[!(four_full$target_child_id == repeats),]
+length(unique(four_full_no_rep$target_child_id)) #46
 length(unique(three_full$target_child_id)) #46
 # this equals 110, but then when you merge them and create 'new' it becomes 96 because of the repeat subjects in
 # 3 year olds and 4 year olds.
@@ -342,39 +400,8 @@ four2_full <- four_full_no_rep
 
 length(unique(four2_full$target_child_id)) #60
 #four2_full <- subset(four_full, target_child_id != repeats2)
-four2_full <- four2_full[! four2_full$target_child_id %in% repeats,]
-length(unique(four2_full$target_child_id)) #46
-
-master_df <- rbind(three_full, four2_full)
-length(three_full$form)#4140
-length(four2_full$form)#4140
-length(unique(three_full$target_child_id))#46
-length(unique(four2_full$target_child_id))#46
-length(unique(four_full$target_child_id))#60
-
-length(master_df$form)#8280
-
-#checking to see if they are no more repeats
-thetruth <- four2_full[four2_full$target_child_id %in% three_full$target_child_id,]
-four_true<-unique(four2_full$target_child_id)
-three_true <-unique(three_full$target_child_id)
-four_true == three_true
-
-# collapsing here again for combined
-detach(package:plyr)
-col_new <- master_df %>% group_by(target_child_id, stem) %>%
-  summarize(counts = sum(count))
-
-length(unique(four2_full$stem)) #25 thank god.
-length(unique(col_new$target_child_id)) #92
-
-length(unique(four2_full$target_child_id)) #46
-length(unique(three_full$target_child_id)) #46
-# well continue this tomorrow...col_new is the only one Alon is interested in.
-# Add proportions to this, means, and averages for each row.
-
-#write.csv(col_new, "C:\\Users\\abima\\Desktop\\corp-an\\collapsed_stems.csv")
-write.csv(col_new, "C:\\Users\\abima\\Desktop\\corp-an\\col_new.csv")
+#four2_full <- four2_full[! four2_full$target_child_id %in% repeats,]
+#length(unique(four2_full$target_child_id)) #46
 
 # collapsing here for 4 year olds.
 detach(package:plyr)
@@ -383,8 +410,7 @@ four_col_new <- four2_full %>% group_by(target_child_id, stem) %>%
 length(unique(four_col_new$target_child_id)) #46
 length(four_col_new$target_child_id) #1150
 
-
-#*********************************************************************************************************************************************************
+write.csv(four_col_new, "C:\\Users\\abima\\Desktop\\corp-an\\fours\\four_col_new.csv")
 
 
 #speaker stats for four year olds. **********************************************************************************************************************
@@ -406,50 +432,18 @@ length(unique(sub_speaker_stats_four2$target_child_id)) # 46, so potentially no 
 ids_for_sub_speaker_stats_four2 <- unique(sub_speaker_stats_four2$target_child_id) # list of unique ids in ids_for_sub_speaker_stats_three2 
 ids_for_sub_speaker_stats_four2_df <- as.data.frame(ids_for_sub_speaker_stats_four2)# as a df
 
-ids_for_sub_speaker_stats_four2_df == ids_for_sub_speaker_stats_three2_df 
-
-#combine the speaker stats for 3 and 4 year olds!*********************************************************************************************************
-full_sub_speaker_stats2 <- rbind(sub_speaker_stats_four2, sub_speaker_stats_three2)
-
-length(sub_speaker_stats_four2$target_child_id) #use sub_speaker_stats_four2 if you want to create a df with the sum of tokens per child for 4 year olds
-length(sub_speaker_stats_three2$target_child_id)#use sub_speaker_stats_three2 if you want to create a df with the sum of tokens per child for 3 year olds
-length(full_sub_speaker_stats2$target_child_id) #we will be using the combined 
-
-# getting the sum of tokens per child for 3 and 4 year olds
-speaker_tokens_for_col_new <- aggregate(full_sub_speaker_stats2$num_tokens, by=list(full_sub_speaker_stats2$target_child_id), sum)
-length(unique(speaker_tokens_for_col_new$Group.1)) # 92
+ids_for_sub_speaker_stats_four2_df == ids_for_sub_speaker_stats_three2_df #all false. good.
 
 #getting the sum of tokens per child for 4 year olds.
 four_speaker_tokens_for_col_new <- aggregate(sub_speaker_stats_four2$num_tokens, by=list(sub_speaker_stats_four2$target_child_id), sum)
 length(unique(four_speaker_tokens_for_col_new$Group.1)) #46
 
-
-#rename the columns for combined.
-names(speaker_tokens_for_col_new)[names(speaker_tokens_for_col_new) == "x"] <- "tokens" 
-names(speaker_tokens_for_col_new)[names(speaker_tokens_for_col_new) == "Group.1"] <- "target_child_id_2" 
-
 #rename the columns for 4 year olds.
 names(four_speaker_tokens_for_col_new)[names(four_speaker_tokens_for_col_new) == "x"] <- "tokens" 
 names(four_speaker_tokens_for_col_new)[names(four_speaker_tokens_for_col_new) == "Group.1"] <- "target_child_id_2" 
 
-
-
-
-#************************************************************************************************************************************************************
-#combined
-speaker_tokens_for_col_new <- speaker_tokens_for_col_new %>% arrange(target_child_id_2) #need this to be the same length as col_new
-
 #4 year olds
 four_speaker_tokens_for_col_new <- four_speaker_tokens_for_col_new %>% arrange(target_child_id_2)
-
-
-
-#combined
-speaker_tokens_for_col_new_sliced <- speaker_tokens_for_col_new %>% slice(rep(1:n(), each = 25)) #n here should be equal to the number of stems
-# the length should be equal to col_new.
-length(speaker_tokens_for_col_new_sliced$tokens) #2300, 92 children x 25 stems.
-length(col_new$counts) #2300
-sum(col_new$counts)
 
 #4 year olds
 four_speaker_tokens_for_col_new_sliced <- four_speaker_tokens_for_col_new %>% slice(rep(1:n(), each = 25)) #n here should be equal to the number of stems
@@ -458,17 +452,167 @@ length(four_speaker_tokens_for_col_new_sliced$tokens) #1150, 46 children x 25 st
 length(four_col_new$counts) #1150
 sum(four_col_new$counts) #661
 
-
-
-#stopped here - need to do this for 3 and 4 separately. not this bottom code though.
-#combined
-collapsed_stem_prop <- cbind(col_new, speaker_tokens_for_col_new_sliced)
-
 #4 year olds 
 four_collapsed_stem_prop <- cbind(four_col_new, four_speaker_tokens_for_col_new_sliced)
 
-#3 year olds
-three_collapsed_stem_prop <- cbind(three_col_new, three_speaker_tokens_for_col_new)
+# CAREFUL TO CHANGE INFO TO FOUR YEAR OLD DATA
+four_collapsed_stem_prop$target_child_id_2 <- NULL
+
+four_collapsed_stem_prop2 <- transform(four_collapsed_stem_prop, prop = counts / tokens)
+
+#sum for each count per child.
+four_child_sum <- aggregate(four_collapsed_stem_prop2$count, by=list(four_collapsed_stem_prop2$target_child_id), sum)
+
+# then, mean for each child.
+sum(four_collapsed_stem_prop2$counts) #661
+
+#sum and mean
+library(plyr)
+four_child_mean <- transform(four_child_sum, mean = x / 661)
+names(four_child_mean)[names(four_child_mean) == "x"] <- "sum" 
+names(four_child_mean)[names(four_child_mean) == "Group.1"] <- "target_child_id"
+#then slice this 25 times for each stem, and bind it to collapsed_stem_prop2, make a new df full_df just in case.
+four_child_mean_for_df <- four_child_mean %>% slice(rep(1:n(), each = 25)) #n here should be equal to the number of stems
+four_collapsed_stem_prop3 <- cbind(four_collapsed_stem_prop2, four_child_mean_for_df) #collapsed_stem_prop3 has sum and mean added as another column to collapsed_stem_prop2
+
+# whats the total number of tokens? - use speaker_tokens_for_col_new
+#sum(three_speaker_tokens_for_col_new$tokens) # 14459725. This is summing all the repeats. # too big.
+
+#for prop mean denominator. Create a new variable from speaker_tokens_for_col_new before slicing 25 times.
+four_speaker_tokens <- aggregate(sub_speaker_stats_four2$num_tokens, by=list(sub_speaker_stats_four2$target_child_id), sum)
+length(unique(four_speaker_tokens$Group.1)) #46
+sum(four_speaker_tokens$x) #341,851
+
+# sum prop column for each child. Which one are we using?
+four_prop_mean <- transform(four_collapsed_stem_prop2, prop_mean = prop / 341851)
+sum(four_collapsed_stem_prop2$prop)
+four_prop_mean2 <- transform(four_collapsed_stem_prop2, prop_mean = prop / 0.09119984) #this number comes from summing the prop of collapsed_stem_prop2 (code above)
+
+write.csv(four_collapsed_stem_prop2, "C:\\Users\\abima\\Desktop\\corp-an\\fours\\four_collapsed_stem_prop2.csv")
+write.csv(four_prop_mean, "C:\\Users\\abima\\Desktop\\corp-an\\fours\\four_prop_mean.csv")
+
+library(plyr)
+four_sumdata <- ddply(four_collapsed_stem_prop2, .(stem), summarise, sumTokens = sum(counts), meanTokens = mean(counts), minTokens = min(counts), maxTokens = max(counts), stdTokens = sd(counts), meanProp = mean(prop))
+write.csv(four_sumdata, "C:\\Users\\abima\\Desktop\\corp-an\\fours\\four_sumdata.csv")
+
+four_sumdata2 <- four_sumdata
+
+four_col_stem_prop <- four_collapsed_stem_prop2
+level_order <- factor(four_col_stem_prop$stem, level = c("combine", "chat", "compete", 
+                                                          "equal", "marry", "match", 
+                                                          "meet", "same", "similar",
+                                                          "trade", "fight", "separate",
+                                                          "differ", "friend",  "connect", "attach", "argue",
+                                                          "split", "kiss",
+                                                          "hug", "disagree",
+                                                          "agree",
+                                                          "touch", "join", "bump"))
+
+plot <- ggplot(four_col_stem_prop, aes(x=level_order, y=counts)) +
+  geom_boxplot() + 
+  stat_summary(fun = mean, geom="point", color = "red", size=2) +
+  xlab("stem")+
+  ylim(0,20)
+plot + theme(legend.position = "none")
+ggsave("fours_zoomed.png", width = 15)
+
+# for plotting stems with a count greater than 0.
+four_more_than_one <- four_collapsed_stem_prop2 %>% filter(counts > 0)
+plot <- ggplot(four_more_than_one, aes(x=stem, y=counts)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = 'point', color = "red", size = 2) +
+  xlab("stem")+
+  ylim(0,20)
+plot + theme(legend.position = 'none')
+ggsave('fours_more_than_one_zoomed.png', width = 15)
+
+#for plotting # of tokens in their corpora
+four_child_corpora_tokes <- four_speaker_tokens
+names(four_child_corpora_tokes)[names(four_child_corpora_tokes) == "x"] <- "tokens" 
+names(four_child_corpora_tokes)[names(four_child_corpora_tokes) == "Group.1"] <- "target_child_id"
+four_ids_tokes <- factor(four_child_corpora_tokes$target_child_id)
+plot <- ggplot(four_child_corpora_tokes, aes(x=four_ids_tokes, y=tokens)) +
+  geom_point() +
+  xlab("child ids")+
+  ylab('tokens')
+plot + theme(legend.position = 'none')
+ggsave('four_child_corpora_tokes.png', width = 15)
+
+# SENTENCE FRAMES FOR 4 year olds *************************************************************************************************************************
+four_ut <- get_utterances(
+  collection = "Eng-NA",
+  role = "target_child",
+  age = c(48,60)
+)
+
+four_ut_filtered <- filter(four_ut, target_child_id %in% four2_full$target_child_id)
+length(unique(four_ut_filtered$target_child_id))
+
+
+four_ut_filtered_sym <- filter(four_ut_filtered, id %in% four2_year_olds_tokens_df_filtered_pos$utterance_id)
+mini_four_ut_filtered_frames <- select(four_ut_filtered_sym, 'id','target_child_id','gloss','stem','type','part_of_speech', 'target_child_id')
+write.csv(mini_four_ut_filtered_frames, "C:\\Users\\abima\\Desktop\\corp-an\\fours\\mini_four_ut_filtered_frames.csv")
+
+#COMBINED****************************************************************************************************
+master_df <- rbind(three_full, four2_full)
+length(three_full$form)#4140
+length(four2_full$form)#4140
+length(unique(three_full$target_child_id))#46
+length(unique(four2_full$target_child_id))#46
+length(unique(four_full$target_child_id))#60
+
+length(master_df$form)#8280
+length(unique(master_df$target_child_id)) #92
+#checking to see if they are no more repeats
+#thetruth <- four2_full[four2_full$target_child_id %in% three_full$target_child_id,]
+four_true<-unique(four2_full$target_child_id)
+three_true <-unique(three_full$target_child_id)
+four_true == three_true
+
+# collapsing here again for combined
+detach(package:plyr)
+col_new <- master_df %>% group_by(target_child_id, stem) %>%
+  summarize(counts = sum(count))
+
+#length(unique(four2_full$stem)) #25 thank god.
+length(unique(col_new$target_child_id)) #92
+
+#length(unique(four2_full$target_child_id)) #46
+#length(unique(three_full$target_child_id)) #46
+# well continue this tomorrow...col_new is the only one Alon is interested in.
+# Add proportions to this, means, and averages for each row.
+
+#write.csv(col_new, "C:\\Users\\abima\\Desktop\\corp-an\\collapsed_stems.csv")
+write.csv(col_new, "C:\\Users\\abima\\Desktop\\corp-an\\combined\\col_new.csv")
+
+#combine the speaker stats for 3 and 4 year olds!*********************************************************************************************************
+unique(sub_speaker_stats_four2$target_child_id) == unique(sub_speaker_stats_three2$target_child_id)
+full_sub_speaker_stats2 <- rbind(sub_speaker_stats_four2, sub_speaker_stats_three2)
+
+length(sub_speaker_stats_four2$target_child_id) #use sub_speaker_stats_four2 if you want to create a df with the sum of tokens per child for 4 year olds
+length(sub_speaker_stats_three2$target_child_id)#use sub_speaker_stats_three2 if you want to create a df with the sum of tokens per child for 3 year olds
+length(full_sub_speaker_stats2$target_child_id) #we will be using the combined #899
+
+# getting the sum of tokens per child for 3 and 4 year olds
+speaker_tokens_for_col_new <- aggregate(full_sub_speaker_stats2$num_tokens, by=list(full_sub_speaker_stats2$target_child_id), sum)
+length(unique(speaker_tokens_for_col_new$Group.1)) # 92
+
+#rename the columns for combined.
+names(speaker_tokens_for_col_new)[names(speaker_tokens_for_col_new) == "x"] <- "tokens" 
+names(speaker_tokens_for_col_new)[names(speaker_tokens_for_col_new) == "Group.1"] <- "target_child_id_2" 
+
+#************************************************************************************************************************************************************
+#combined
+speaker_tokens_for_col_new <- speaker_tokens_for_col_new %>% arrange(target_child_id_2) #need this to be the same length as col_new
+
+#combined
+speaker_tokens_for_col_new_sliced <- speaker_tokens_for_col_new %>% slice(rep(1:n(), each = 25)) #n here should be equal to the number of stems
+# the length should be equal to col_new.
+length(speaker_tokens_for_col_new_sliced$tokens) #2300, 92 children x 25 stems.
+length(col_new$counts) #2300
+sum(col_new$counts) #1406
+
+collapsed_stem_prop <- cbind(col_new, speaker_tokens_for_col_new_sliced)
 
 collapsed_stem_prop$target_child_id_2 <- NULL
 
@@ -478,7 +622,7 @@ collapsed_stem_prop2 <- transform(collapsed_stem_prop, prop = counts / tokens)
 child_sum <- aggregate(collapsed_stem_prop2$count, by=list(collapsed_stem_prop2$target_child_id), sum)
 
 # then, mean for each child.
-sum(collapsed_stem_prop2$counts) #1406, so you would do n (that child's sum, divided by 1583)
+sum(collapsed_stem_prop2$counts) #1406, so you would do n (that child's sum, divided by 1406)
 
 #sum and mean
 child_mean <- transform(child_sum, mean = x / 1406)
@@ -496,15 +640,12 @@ prop_mean <- transform(collapsed_stem_prop2, prop_mean = prop / 920240)
 sum(collapsed_stem_prop2$prop)
 prop_mean2 <- transform(collapsed_stem_prop2, prop_mean = prop / 0.16901) #this number comes from summing the prop of collapsed_stem_prop2 (code above)
 
-#how to initiate a package after detaching it?
-#mean_prop <- ddply(collapsed_stem_prop2) #what does this even do?
+write.csv(collapsed_stem_prop2, "C:\\Users\\abima\\Desktop\\corp-an\\combined\\collapsed_stem_prop2.csv")
+write.csv(prop_mean, "C:\\Users\\abima\\Desktop\\corp-an\\combined\\prop_mean.csv")
 
-
-write.csv(collapsed_stem_prop2, "C:\\Users\\abima\\Desktop\\corp-an\\collapsed_stem_prop2.csv")
-
-
+library(plyr)
 sumdata <- ddply(collapsed_stem_prop2, .(stem), summarise, sumTokens = sum(counts), meanTokens = mean(counts), minTokens = min(counts), maxTokens = max(counts), stdTokens = sd(counts), meanProp = mean(prop))
-write.csv(sumdata, "C:\\Users\\abima\\Desktop\\corp-an\\sumdata.csv")
+write.csv(sumdata, "C:\\Users\\abima\\Desktop\\corp-an\\combined\\sumdata.csv")
 
 #sumdata <- read.csv(file = "C:\\Users\\abima\\Desktop\\corp-an\\sumdata.csv", header = TRUE)
 sumdata2 <- sumdata
@@ -526,98 +667,35 @@ level_order <- factor(col_stem_prop$stem, level = c("combine", "chat", "compete"
 plot <- ggplot(col_stem_prop, aes(x=level_order, y=counts)) +
   geom_boxplot() + 
   stat_summary(fun = mean, geom="point", color = "red", size=2) +
-  xlab("stem")#+
-  #ylim(0,20)
+  xlab("stem")+
+  ylim(0,20)
 plot + theme(legend.position = "none")
-#ggsave("ggplot_categoryv2_zoomed.png", width = 15)
-# *************************************************
-pure_stems <- c("combine", "chat", "compete", 
-           "equal", "marry", "match", 
-           "meet", "same", "similar",
-           "trade", "fight", "separate")
-mix_stems <- c("split","attach", "kiss",
-                "hug", "friend", "disagree",
-                "differ", "connect", "argue",
-                "agree")
-nonsym_stems <- c("touch", "join", "bump")
-a <- ifelse(col_stem_prop$stem %in% pure_stems, "red","blue")
-b <- ifelse(col_stem_prop$stem %in% mix_stems, "blue", "orange")
-c <- ifelse(col_stem_prop$stem %in% nonsym_stems, "green", "purple")
+ggsave("combined_zoomed.png", width = 15)
+#************************************************************************************
+# for plotting stems with a count greater than 0.
+combined_more_than_one <- collapsed_stem_prop2 %>% filter(counts > 0)
+plot <- ggplot(combined_more_than_one, aes(x=stem, y=counts)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = 'point', color = "red", size = 2) +
+  xlab("stem")+
+  ylim(0,20)
+plot + theme(legend.position = 'none')
+ggsave('combined_more_than_one_zoomed.png', width = 15)
 
+#for plotting # of tokens in their corpora
+combined_child_corpora_tokes <- speaker_tokens_for_col_new
+#names(combined_child_corpora_tokes)[names(combined_child_corpora_tokes) == "x"] <- "tokens" 
+names(combined_child_corpora_tokes)[names(combined_child_corpora_tokes) == "target_child_id_2"] <- "target_child_id"
+combined_ids_tokes <- factor(combined_child_corpora_tokes$target_child_id)
+plot <- ggplot(combined_child_corpora_tokes, aes(x=combined_ids_tokes, y=tokens)) +
+  geom_point() +
+  xlab("child ids")+
+  ylab('tokens')
+plot + theme(legend.position = 'none')
+ggsave('combined_child_corpora_tokes.png', width = 15)
 
-plot <- ggplot(col_stem_prop, aes(x=level_order, y=counts, fill = level_order)) +
-  geom_boxplot() + 
-  stat_summary(fun = mean, geom="point", color = "red", size=2) +
-  xlab("stem")
-plot + theme(axis.text.x = element_text(colour = a))
-#ggsave("ggplot_category.png", width = 15)
-
-#write.csv(collapsed_stem_prop2, "C:\\Users\\abima\\Desktop\\corp-an\\collapsed_stem_prop2.csv")
-
-length(unique(four2_full$target_child_id))
-length(unique(three_full$target_child_id))
-
-#getting target_child_sex
-target_child_sex_three <- select(three_full, "target_child_id", "target_child_sex")
-target_child_sex_three <- filter(target_child_sex_three, target_child_sex %in% "male")
-length(unique(target_child_sex_three$target_child_id)) #24 males in three year olds df. Which means, 22 females., 2 missing sex
-
-target_child_sex_three <- select(three_full, "target_child_id", "target_child_sex")
-target_child_sex_three_female <- filter(target_child_sex_three, target_child_sex %in% "female")
-length(unique(target_child_sex_three_female$target_child_id)) #22
-
-
-target_child_sex_four <- select(four2_full, "target_child_id", "target_child_sex")
-target_child_sex_four <- filter(target_child_sex_four, target_child_sex %in% "male")
-length(unique(target_child_sex_four$target_child_id)) #31, which means we have 16 females in four year old df. 1 missing sex.
-
-target_child_sex_four <- select(four2_full, "target_child_id", "target_child_sex")
-target_child_sex_four_female <- filter(target_child_sex_four, target_child_sex %in% "female")
-length(unique(target_child_sex_four_female$target_child_id)) #16 - 1 data point missing sex.
-
-#getting corpus info
-length(unique(four2_year_olds_tokens_df$corpus_name)) #16 - 13 = 3 unique corpora
-length(unique(three2_year_olds_tokens_df$corpus_name)) #22 - 13 = 9 unique corpora 
-
-repeats <- four2_year_olds_tokens_df$corpus_name[four2_year_olds_tokens_df$corpus_name %in% three2_year_olds_tokens_df$corpus_name]
-length(unique(repeats))
-unique(repeats)
-
-#four_counts <- four2_year_olds_tokens_df %>% group_by(form, target_child_id, target_child_age, target_child_sex) %>%
-  #summarize(count = sum(unique(length(form))))
-
-collapsed_stem_prop2$stem <- as.factor(collapsed_stem_prop2$stem)
-p <- collapsed_stem_prop2 %>%
-  mutate(stem = fct_relevel(stem, 
-                            "combine", "chat", "compete", 
-                            "equal", "marry", "match", 
-                            "meet", "same", "similar",
-                            "trade", "fight", "separate",
-                            "differ", "friend", "connect",
-                            "argue", "attach",
-                            "split", "kiss",
-                            "hug", "disagree",
-              
-                            "agree",
-                            "touch", "join", "bump")) %>%
-  ggplot( aes(x=stem, y=counts)) +
-  geom_boxplot()
-  plot + stat_summary(fun.y=mean, geom="point", color = "red", size=2)
-  ggsave("ggplot_categoryv2.png", width = 15)
-  
-  
-#og plot                                               
-plot <- ggplot(collapsed_stem_prop2, aes(x=stem, y=counts)) +
-  geom_boxplot()
-  plot +   stat_summary(fun.y=mean, geom="point", color = "red", size=2)
-  ggsave("ggplot_wide.png", width = 15)
-  
-sum(master_df$count)
-
-#### ***********************************************************************
-
-#three_attach_sum <- aggregate(col_new$counts, by=list(collapsed_stem_prop2$stem == "attach"), sum)
-#aggregate(collapsed_stem_prop2[,sapply(df,is.numeric)],collapsed_stem_prop2["stem"],sum)
-
+#end
 totalstem <- aggregate(counts~stem,collapsed_stem_prop2,sum)
-names(totalB)[2] <- 'totalB'
+
+three_totalid <- aggregate(counts~target_child_id, three_collapsed_stem_prop2, sum)
+four_totalid <- aggregate(counts~target_child_id, four_collapsed_stem_prop2, sum)
