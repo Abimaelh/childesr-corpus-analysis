@@ -545,13 +545,35 @@ four_ut <- get_utterances(
   age = c(48,60)
 )
 
+#filter by the target_child_ids in four2_full
 four_ut_filtered <- filter(four_ut, target_child_id %in% four2_full$target_child_id)
 length(unique(four_ut_filtered$target_child_id))
 
-
+#then filter by the utterance id
 four_ut_filtered_sym <- filter(four_ut_filtered, id %in% four2_year_olds_tokens_df_filtered_pos$utterance_id)
 mini_four_ut_filtered_frames <- select(four_ut_filtered_sym, 'id','target_child_id','gloss','stem','type','part_of_speech', 'target_child_id')
 write.csv(mini_four_ut_filtered_frames, "C:\\Users\\abima\\Desktop\\corp-an\\fours\\mini_four_ut_filtered_frames.csv")
+
+
+four2_year_olds_tokens_df_filtered_pos$wordstem <- paste(four2_year_olds_tokens_df_filtered_pos$stem, four2_year_olds_tokens_df_filtered_pos$utterance_id)
+four2_wordstem_only <- select(four2_year_olds_tokens_df_filtered_pos, 'wordstem', 'target_child_id')
+#now break this column in 2 and then filter by four_ut_ids, and then add it to mini_four_ut_filtered_frames, make sure they are the same length.
+#stopped here.
+four2_wordstem_only <- filter(four2_wordstem_only, target_child_id %in% four2_full$target_child_id)
+length(unique(four2_wordstem_only$target_child_id))
+
+
+four2_wordstem_only_final <- four2_wordstem_only %>% separate(wordstem, c("stem", "utterance_id"))
+length(unique(four2_wordstem_only_final$target_child_id))
+
+
+four_ut_filtered_frames_with_wordstem <- four2_wordstem_only_final %>%
+  filter(utterance_id %in% mini_four_ut_filtered_frames$id)
+
+mini_four_ut_filtered_frames$id_target <- paste(mini_four_ut_filtered_frames$id, mini_four_ut_filtered_frames$target_child_id)
+four_ut_filtered_frames_with_wordstem$id_target <- paste(four_ut_filtered_frames_with_wordstem$utterance_id, four_ut_filtered_frames_with_wordstem$target_child_id)
+
+four_frames_unique <- distinct(four_ut_filtered_frames_with_wordstem, id_target, .keep_all = TRUE)
 
 #COMBINED****************************************************************************************************
 master_df <- rbind(three_full, four2_full)
@@ -696,6 +718,11 @@ ggsave('combined_child_corpora_tokes.png', width = 15)
 
 #end
 totalstem <- aggregate(counts~stem,collapsed_stem_prop2,sum)
+three_total_stem <- aggregate(counts~stem,three_collapsed_stem_prop2,sum)
+four_total_stem <- aggregate(counts~stem,four_collapsed_stem_prop2,sum)
 
 three_totalid <- aggregate(counts~target_child_id, three_collapsed_stem_prop2, sum)
 four_totalid <- aggregate(counts~target_child_id, four_collapsed_stem_prop2, sum)
+
+write.csv(three_totalid, "C:\\Users\\abima\\Desktop\\corp-an\\threes\\three_totalid.csv")
+write.csv(four_totalid, "C:\\Users\\abima\\Desktop\\corp-an\\fours\\four_totalid.csv")
