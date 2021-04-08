@@ -557,24 +557,94 @@ write.csv(mini_four_ut_filtered_frames, "C:\\Users\\abima\\Desktop\\corp-an\\fou
 
 four2_year_olds_tokens_df_filtered_pos$wordstem <- paste(four2_year_olds_tokens_df_filtered_pos$stem, four2_year_olds_tokens_df_filtered_pos$utterance_id)
 four2_wordstem_only <- select(four2_year_olds_tokens_df_filtered_pos, 'wordstem', 'target_child_id')
+
+four2_wordstem_only <- four2_wordstem_only %>% arrange(target_child_id)
 #now break this column in 2 and then filter by four_ut_ids, and then add it to mini_four_ut_filtered_frames, make sure they are the same length.
 #stopped here.
 four2_wordstem_only <- filter(four2_wordstem_only, target_child_id %in% four2_full$target_child_id)
 length(unique(four2_wordstem_only$target_child_id))
+four2_wordstem_only <- four2_wordstem_only %>% arrange(target_child_id)
 
+#not yet
+#four2_wordstem_only_final <- four2_wordstem_only %>% separate(wordstem, c("stem", "utterance_id"))
+#length(unique(four2_wordstem_only_final$target_child_id))
+four2_wordstem_only2 <- distinct(four2_wordstem_only, wordstem, .keep_all = TRUE)
 
-four2_wordstem_only_final <- four2_wordstem_only %>% separate(wordstem, c("stem", "utterance_id"))
-length(unique(four2_wordstem_only_final$target_child_id))
-
+four2_wordstem_only_final <- four2_wordstem_only2 %>% separate(wordstem, c("stem", "utterance_id"))
 
 four_ut_filtered_frames_with_wordstem <- four2_wordstem_only_final %>%
   filter(utterance_id %in% mini_four_ut_filtered_frames$id)
 
-mini_four_ut_filtered_frames$id_target <- paste(mini_four_ut_filtered_frames$id, mini_four_ut_filtered_frames$target_child_id)
-four_ut_filtered_frames_with_wordstem$id_target <- paste(four_ut_filtered_frames_with_wordstem$utterance_id, four_ut_filtered_frames_with_wordstem$target_child_id)
+four_ut_filtered_frames_with_wordstem <- distinct(four_ut_filtered_frames_with_wordstem, utterance_id, .keep_all = TRUE)
 
-four_frames_unique <- distinct(four_ut_filtered_frames_with_wordstem, id_target, .keep_all = TRUE)
+mini_four_ut_filtered_frames <- mini_four_ut_filtered_frames %>% arrange(id)
+four_ut_filtered_frames_with_wordstem <- four_ut_filtered_frames_with_wordstem %>% arrange(utterance_id)
 
+names(four_ut_filtered_frames_with_wordstem)[names(four_ut_filtered_frames_with_wordstem) == "stem"] <- "word stem" 
+
+four_ut_filtered_frames_with_wordstem$utterance_id <- as.integer(as.character(four_ut_filtered_frames_with_wordstem$utterance_id)) 
+sapply(four_ut_filtered_frames_with_wordstem, class)
+four_ut_filtered_frames_with_wordstem <- four_ut_filtered_frames_with_wordstem %>% arrange(utterance_id)
+mini_four_ut_filtered_frames <- mini_four_ut_filtered_frames %>% arrange(id)
+#you had to make sure what you were arranging by was of integer type since the utterance ids are of integer type in mini_four_ut_filtered_frames
+mini_four_frames_with_wordstem <- cbind(mini_four_ut_filtered_frames,four_ut_filtered_frames_with_wordstem)
+mini_four_frames_with_wordstem_cleaned <- mini_four_frames_with_wordstem
+
+mini_four_frames_with_wordstem_cleaned$utterance_id <- NULL
+mini_four_frames_with_wordstem_cleaned$id_target <- NULL
+mini_four_frames_with_wordstem_cleaned$target_child_id <- NULL
+names(mini_four_frames_with_wordstem_cleaned)[names(mini_four_frames_with_wordstem_cleaned) == "id"] <- "utterance_id" 
+
+mini_four_frames_with_wordstem_cleaned<- mini_four_frames_with_wordstem_cleaned %>% relocate(target_child_id, .after = utterance_id)
+names(mini_four_frames_with_wordstem_cleaned)[names(mini_four_frames_with_wordstem_cleaned) == "word stem"] <- "word_stem" 
+
+mini_four_frames_with_wordstem_cleaned<- mini_four_frames_with_wordstem_cleaned %>% relocate(word_stem, .after = target_child_id)
+
+age_four <- rep(c(4),times=636)
+
+age_four <- as.data.frame(age_four)
+
+mini_four_frames_with_wordstem_cleaned2 <- cbind(mini_four_frames_with_wordstem_cleaned, age_four)
+names(mini_four_frames_with_wordstem_cleaned2)[names(mini_four_frames_with_wordstem_cleaned2) == "age_four"] <- "Age" 
+mini_four_frames_with_wordstem_cleaned2 <- mini_four_frames_with_wordstem_cleaned2 %>% relocate(Age, .after = target_child_id)
+
+write.csv(mini_four_frames_with_wordstem_cleaned2, "C:\\Users\\abima\\Desktop\\corp-an\\fours\\mini_four_frames_with_wordstem_cleaned2.csv")
+
+##
+#mini_four_frames_with_wordstem <- cbind(mini_four_ut_filtered_frames,four_ut_filtered_frames_with_wordstem)
+
+#sapply(mini_four_frames_with_wordstem, class)
+#sapply(mini_four_ut_filtered_frames, class)
+
+#sapply(mini_four_frames_with_wordstem, class) 
+
+#mini_four_frames_with_wordstem$utterance_id <- as.numeric(as.character(mini_four_frames_with_wordstem$utterance_id)) 
+
+
+#mini_four_frames_with_wordstem$utterance_id <- as.numeric(as.character(mini_four_frames_with_wordstem$utterance_id)) 
+#sapply(mini_four_frames_with_wordstem, class) 
+
+#mini_four_frames_with_wordstem <- mini_four_frames_with_wordstem %>% arrange(utterance_id)
+
+#
+#mini_four_ut_filtered_frames$id_target <- paste(mini_four_ut_filtered_frames$id, mini_four_ut_filtered_frames$target_child_id)
+#four_ut_filtered_frames_with_wordstem$id_target <- paste(four_ut_filtered_frames_with_wordstem$utterance_id, four_ut_filtered_frames_with_wordstem$target_child_id)
+
+#four_frames_unique <- distinct(four_ut_filtered_frames_with_wordstem, id_target, .keep_all = TRUE)
+#length(four_frames_unique$id_target)
+#length(mini_four_ut_filtered_frames$target_child_id)
+
+#four_frames_unique$id_target <- NULL
+#mini_four_frames_with_wordstem <- cbind(mini_four_ut_filtered_frames,four_frames_unique)
+
+#mini_four_frames_with_wordstem <- mini_four_frames_with_wordstem %>% arrange(target_child_id) 
+
+#mini_four_frames_with_wordstem$target_child_id <- NULL
+
+#mini_four_frames_with_wordstem <- mini_four_frames_with_wordstem %>% arrange(target_child_id)
+
+
+#SOMETHING WENT WRONG HERE THEY DONT LINE UP.
 #COMBINED****************************************************************************************************
 master_df <- rbind(three_full, four2_full)
 length(three_full$form)#4140
