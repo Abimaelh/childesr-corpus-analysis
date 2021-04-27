@@ -102,7 +102,7 @@ three_full <- merge(three_counts, three_sym_and_id, all = TRUE)
 three_full <- three_full %>% arrange(target_child_id)
 
 length(unique(three_full$form))
-
+length(unique(three_full$target_child_id))
 length(three_full$form) #4140
 #stopped here - 3/29 - 10:07am
 #now go in and change NAs for age to 3 and NAs for count to 0
@@ -266,9 +266,12 @@ three_ut <- get_utterances(
 
 three_ut_filtered <- filter(three_ut, target_child_id %in% three_full$target_child_id)
 length(unique(three_ut_filtered$target_child_id))
+length(unique(three_full$target_child_id))
 
+ids_for_threes
 
 three_ut_filtered_sym <- filter(three_ut_filtered, id %in% three2_year_olds_tokens_df_filtered_pos$utterance_id)
+length(unique(three_ut_filtered_sym$target_child_id))
 mini_three_ut_filtered_frames <- select(three_ut_filtered_sym, 'id','target_child_id','gloss','stem','type','part_of_speech', 'target_child_id')
 write.csv(mini_three_ut_filtered_frames, "C:\\Users\\abima\\Desktop\\corp-an\\threes\\mini_three_ut_filtered_frames.csv")
 
@@ -330,6 +333,25 @@ names(mini_three_frames_with_wordstem_cleaned2)[names(mini_three_frames_with_wor
 mini_three_frames_with_wordstem_cleaned2 <- mini_three_frames_with_wordstem_cleaned2 %>% relocate(Age, .after = target_child_id)
 
 write.csv(mini_three_frames_with_wordstem_cleaned2, "C:\\Users\\abima\\Desktop\\corp-an\\threes\\mini_three_frames_with_wordstem_cleaned2.csv")
+
+# 3 year old input ************************************************************************************************************************************
+three_year_olds_input_tokens_df <- get_tokens(
+  collection = "Eng-NA",
+  age = c(36, 48),
+  token = sym_list$form
+)
+
+input_three <- get_transcripts (
+  collection = "Eng-NA",
+  corpus = "VanKleeck",
+  target_child = 'Matthew'
+)
+
+input_three_utt <- get_utterances (
+  collection = 'Eng-NA',
+  corpus = 'VanKleeck',
+  target_child = 'Matthew',
+)
 
 # *****************************************************************************************************************************************************
 
@@ -860,3 +882,15 @@ write.csv(four_totalid, "C:\\Users\\abima\\Desktop\\corp-an\\fours\\four_totalid
 # Combined frames
 combined_frames <- rbind(mini_three_frames_with_wordstem_cleaned2, mini_four_frames_with_wordstem_cleaned2)
 write.csv(combined_frames, "C:\\Users\\abima\\Desktop\\corp-an\\combined\\combined_frames.csv")
+
+combined_frames2 <- read.csv(file = "C:\\Users\\abima\\Desktop\\corp-an\\combined\\combined_frames.csv", header = TRUE)
+
+childesframes34 <- read.csv(file = "C:\\Users\\abima\\Desktop\\corp-an\\child2.csv", header = TRUE)
+length(childesframes34$target_child_id)
+childframes34_2 <- childesframes34 %>% filter(pos == 'adj' | pos == 'n')
+#length(childesframes34$word_stem)
+#unique(childframes34_2$word_stem)
+length(childframes34_2$target_child_id)
+child_subset <- childesframes34 %>% filter(pos == 'v')
+length(child_subset$target_child_id)
+write.csv(child_subset, "C:\\Users\\abima\\Desktop\\corp-an\\child_subset.csv")
