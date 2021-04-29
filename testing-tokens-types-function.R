@@ -257,7 +257,7 @@ plot <- ggplot(three_child_corpora_tokes, aes(x=three_ids_tokes, y=tokens)) +
 plot + theme(legend.position = 'none')
 ggsave('threes_child_corpora_tokes.png', width = 15)
 
-# SENTENCE FRAMES FOR 3 year olds
+# SENTENCE FRAMES FOR 3 year olds************************************************************************************************************************
 three_ut <- get_utterances(
   collection = "Eng-NA",
   role = "target_child",
@@ -286,9 +286,7 @@ three2_wordstem_only <- filter(three2_wordstem_only, target_child_id %in% three2
 length(unique(three2_wordstem_only$target_child_id))
 three2_wordstem_only <- three2_wordstem_only %>% arrange(target_child_id)
 
-#not yet
-#four2_wordstem_only_final <- four2_wordstem_only %>% separate(wordstem, c("stem", "utterance_id"))
-#length(unique(four2_wordstem_only_final$target_child_id))
+
 three2_wordstem_only2 <- distinct(three2_wordstem_only, wordstem, .keep_all = TRUE)
 
 three2_wordstem_only_final <- three2_wordstem_only2 %>% separate(wordstem, c("stem", "utterance_id"))
