@@ -127,6 +127,24 @@ length(three_col_new$target_child_id) #1150
 
 write.csv(three_col_new, "C:\\Users\\abima\\Desktop\\corp-an\\threes\\three_col_new.csv")
 
+#three_summarized_counts <- three2_year_olds_tokens_df_filtered_pos %>% group_by(stem,form, pos) %>%
+  #summarize(count = sum(unique(length(stem))))
+#three_summarized_counts2 <- three2_year_olds_tokens_df_filtered_pos %>% group_by(stem, pos) %>%
+  #summarize(count = sum(unique(length(stem))))
+
+#three_sym_not_found <- sym_list_pos %>% filter(!form %in% three_summarized_counts$form)
+#three_sym_not_found['pos'] <- NA
+#three_sym_not_found['count'] <- NA
+#three_not_found_counts <- three_sym_not_found %>% group_by(form, pos) %>%
+  #summarize(count = sum(unique(length(form))))
+
+#three_sym_not_found$count[is.na(three_sym_not_found$count)] <- 0
+#names(three_sym_not_found)[names(three_sym_not_found) == "Predicate"] <- "stem"
+
+#three_wide_full <- rbind(three_wide_counts, three_sym_not_found)
+
+#write.csv(three_wide_full, "C:\\Users\\abima\\Desktop\\corp-an\\threes\\three_full.csv") #count for each word + pos
+
 #speaker stats for three year olds.*********************************************************************************************************************
 speaker_stats_three <- get_speaker_statistics(
   collection = "Eng-NA",
@@ -233,7 +251,7 @@ plot <- ggplot(three_col_stem_prop, aes(x=level_order, y=counts)) +
   xlab("stem")+
   ylim(0,20)
 plot + theme(legend.position = "none")
-ggsave("threes_zoomed.png", width = 15)
+#ggsave("threes_zoomed.png", width = 15)
 
 # for plotting stems with a count greater than 0.
 three_more_than_one <- three_collapsed_stem_prop2 %>% filter(counts > 0)
@@ -563,12 +581,14 @@ length(unique(four_speaker_tokens$Group.1)) #46
 sum(four_speaker_tokens$x) #341,851
 
 # sum prop column for each child. Which one are we using?
-four_prop_mean <- transform(four_collapsed_stem_prop2, prop_mean = prop / 341851)
+four_prop_mean <- transform(four_collapsed_stem_prop2, prop_mean = prop / 341851) # sum of the tokens in four_speaker_tokens
 sum(four_collapsed_stem_prop2$prop)
 four_prop_mean2 <- transform(four_collapsed_stem_prop2, prop_mean = prop / 0.09119984) #this number comes from summing the prop of collapsed_stem_prop2 (code above)
 
 write.csv(four_collapsed_stem_prop2, "C:\\Users\\abima\\Desktop\\corp-an\\fours\\four_collapsed_stem_prop2.csv")
 write.csv(four_prop_mean, "C:\\Users\\abima\\Desktop\\corp-an\\fours\\four_prop_mean.csv")
+
+four_collapsed_stem_prop2
 
 library(plyr)
 four_sumdata <- ddply(four_collapsed_stem_prop2, .(stem), summarise, sumTokens = sum(counts), meanTokens = mean(counts), minTokens = min(counts), maxTokens = max(counts), stdTokens = sd(counts), meanProp = mean(prop))
@@ -892,3 +912,23 @@ length(childframes34_2$target_child_id)
 child_subset <- childesframes34 %>% filter(pos == 'v')
 length(child_subset$target_child_id)
 write.csv(child_subset, "C:\\Users\\abima\\Desktop\\corp-an\\child_subset.csv")
+
+child_subset_import <- read.csv(file = "C:\\Users\\abima\\Desktop\\corp-an\\child_subset.csv", header = TRUE)
+length(unique(child_subset_import$target_child_id))
+child_subset_import_three <- child_subset_import %>% filter(Age == '3')
+child_subset_import_four <- child_subset_import %>% filter(Age == '4')
+length(unique(child_subset_import_three$target_child_id)) #33 three-year-olds
+length(unique(child_subset_import_four$target_child_id)) #41 four-year-olds
+length(unique(child_subset_import$target_child_id)) #74 total children
+overlap_ids <- child_subset_import_three$target_child_id %in% child_subset_import_four$target_child_id
+
+filter_by_wordstem <- child_subset_import %>% filter(word_stem == 'touch')
+length(unique(filter_by_wordstem$target_child_id)) #50/74 produced this word.
+
+detach(package:plyr)
+filter_by_wordstem_counts <- filter_by_wordstem %>% group_by(target_child_id) %>%
+  summarize(count = sum(unique(length(word_stem))))
+
+
+p<-ggplot(data=filter_by_wordstem, aes(x=target_child_id, y=len)) +
+  geom_bar(stat="identity")
