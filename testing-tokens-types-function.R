@@ -931,9 +931,9 @@ filter_by_wordstem2 <- child_subset_import %>% filter(word_stem == 'touch' | wor
                                                         | word_stem == 'join' | word_stem == 'separate' | word_stem == 'trade')
 length(unique(filter_by_wordstem$target_child_id)) #50 total kids if we narrow down the list to these 10 words
 
-detach(package:plyr) #not sure this one is correct.
-filter_by_wordstem_counts <- filter_by_wordstem %>% group_by(target_child_id) %>%
-  summarize(count = sum(unique(length(word_stem))))
+#detach(package:plyr) #not sure this one is correct.
+#filter_by_wordstem_counts <- filter_by_wordstem %>% group_by(target_child_id) %>%
+  #summarize(count = sum(unique(length(word_stem))))
 
 #child word_stem frequency
 filter_by_wordstem_counts2 <- filter_by_wordstem2 %>% group_by(word_stem,target_child_id) %>%
