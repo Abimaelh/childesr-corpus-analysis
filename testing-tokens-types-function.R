@@ -913,7 +913,11 @@ child_subset <- childesframes34 %>% filter(pos == 'v')
 length(child_subset$target_child_id)
 write.csv(child_subset, "C:\\Users\\abima\\Desktop\\corp-an\\child_subset.csv")
 
+# child import FREQ AND NUMBER OF CHILDREN PRODUCED ************************************************************************************************************************
 child_subset_import <- read.csv(file = "C:\\Users\\abima\\Desktop\\corp-an\\child_subset.csv", header = TRUE)
+child_subset_import$X.1 <- NULL
+child_subset_import$X <- NULL
+
 length(unique(child_subset_import$target_child_id))
 child_subset_import_three <- child_subset_import %>% filter(Age == '3')
 child_subset_import_four <- child_subset_import %>% filter(Age == '4')
@@ -921,14 +925,32 @@ length(unique(child_subset_import_three$target_child_id)) #33 three-year-olds
 length(unique(child_subset_import_four$target_child_id)) #41 four-year-olds
 length(unique(child_subset_import$target_child_id)) #74 total children
 overlap_ids <- child_subset_import_three$target_child_id %in% child_subset_import_four$target_child_id
+overlap_ids
 
-filter_by_wordstem <- child_subset_import %>% filter(word_stem == 'touch')
-length(unique(filter_by_wordstem$target_child_id)) #50/74 produced this word.
+filter_by_wordstem2 <- child_subset_import %>% filter(word_stem == 'touch' | word_stem == 'fight' | word_stem == 'bump' | word_stem == 'match' | word_stem == 'kiss' | word_stem == 'meet' | word_stem == 'marry' | word_stem == 'attach' | word_stem == 'connect' | word_stem == 'hug'
+                                                        | word_stem == 'join' | word_stem == 'separate' | word_stem == 'trade')
+length(unique(filter_by_wordstem$target_child_id)) #50 total kids if we narrow down the list to these 10 words
 
-detach(package:plyr)
+detach(package:plyr) #not sure this one is correct.
 filter_by_wordstem_counts <- filter_by_wordstem %>% group_by(target_child_id) %>%
   summarize(count = sum(unique(length(word_stem))))
 
+#child word_stem frequency
+filter_by_wordstem_counts2 <- filter_by_wordstem2 %>% group_by(word_stem,target_child_id) %>%
+  summarize(count = sum(unique(length(word_stem))))
+write.csv(filter_by_wordstem_counts2, "C:\\Users\\abima\\Desktop\\corp-an\\wide predicate search\\wordstem_freq_per_child.csv")
+length(unique(filter_by_wordstem_counts2$word_stem))
+#filter_by_wordstem_counts3 <- filter_by_wordstem2 %>% group_by(word_stem) %>%
+  #summarize(count = sum(unique(length(word_stem))))
 
-p<-ggplot(data=filter_by_wordstem, aes(x=target_child_id, y=len)) +
-  geom_bar(stat="identity")
+#wordstem frequency and how many child produce it
+filter_by_wordstem_counts4 <- filter_by_wordstem2 %>% group_by(word_stem) %>%
+  summarize(tokens = sum(unique(length(word_stem))), num_chi = length(unique(target_child_id)))
+write.csv(filter_by_wordstem_counts4, "C:\\Users\\abima\\Desktop\\corp-an\\wide predicate search\\wordstem_freq_and_num_of_child_prod.csv")
+
+
+length(unique(filter_by_wordstem_counts$target_child_id))
+
+p<-ggplot(data=filter_by_wordstem_counts2, aes(x=target_child_id, y=count,)) +
+  geom_bar(stat="identity", width = 0.5, position = "dodge") + facet_grid(.~word_stem)
+p
