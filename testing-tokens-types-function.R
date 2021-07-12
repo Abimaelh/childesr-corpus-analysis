@@ -31,6 +31,8 @@ three_year_olds_tokens_df <- get_tokens(
   token = sym_list$form
 )
 
+length(unique(three_year_olds_tokens_df$target_child_id))#55
+
 three_year_olds_tokens_df <- three_year_olds_tokens_df %>% arrange(target_child_id)
 
 three2_year_olds_tokens_df <- select(three_year_olds_tokens_df, 'target_child_id', 'corpus_name', 'target_child_age',
@@ -927,19 +929,22 @@ length(unique(child_subset_import$target_child_id)) #74 total children
 overlap_ids <- child_subset_import_three$target_child_id %in% child_subset_import_four$target_child_id
 overlap_ids
 
-filter_by_wordstem2 <- child_subset_import %>% filter(word_stem == 'touch' | word_stem == 'fight' | word_stem == 'bump' | word_stem == 'match' | word_stem == 'kiss' | word_stem == 'meet' | word_stem == 'marry' | word_stem == 'attach' | word_stem == 'connect' | word_stem == 'hug'
+filter_by_wordstem2 <- child_subset_import %>% filter(word_stem == 'touch' | word_stem == 'fight' | word_stem == 'match' | word_stem == 'kiss' | word_stem == 'meet' | word_stem == 'marry' | word_stem == 'attach' | word_stem == 'connect' | word_stem == 'hug'
                                                         | word_stem == 'join' | word_stem == 'separate' | word_stem == 'trade')
-length(unique(filter_by_wordstem$target_child_id)) #50 total kids if we narrow down the list to these 10 words
-
+length(unique(filter_by_wordstem2$target_child_id)) #71
+length(unique(filter_by_wordstem2$word_stem))
 #detach(package:plyr) #not sure this one is correct.
 #filter_by_wordstem_counts <- filter_by_wordstem %>% group_by(target_child_id) %>%
   #summarize(count = sum(unique(length(word_stem))))
 
 #child word_stem frequency
+detach(package:plyr) 
 filter_by_wordstem_counts2 <- filter_by_wordstem2 %>% group_by(word_stem,target_child_id) %>%
   summarize(count = sum(unique(length(word_stem))))
 write.csv(filter_by_wordstem_counts2, "C:\\Users\\abima\\Desktop\\corp-an\\wide predicate search\\wordstem_freq_per_child.csv")
+
 length(unique(filter_by_wordstem_counts2$word_stem))
+unique(filter_by_wordstem_counts2$word_stem)
 #filter_by_wordstem_counts3 <- filter_by_wordstem2 %>% group_by(word_stem) %>%
   #summarize(count = sum(unique(length(word_stem))))
 
