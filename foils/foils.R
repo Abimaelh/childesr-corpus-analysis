@@ -339,9 +339,9 @@ length(unique(four_foil_counts_collapsed_final$foil_stem))
 
 length(unique(mini_four_foil_frames_with_wordstem_cleaned2$target_child_id)) #53 four year olds
 
-savehistory(file = "C:\\Users\\abima\\Desktop\\corp-an\\foils\\foils.Rhistory")
 
-# *** combined checks
+
+# *** combined checks ***
 
 collapsed_check <- four_foil_counts_collapsed_final %>% filter(!foil_stem %in% three_foil_counts_collapsed_final$foil_stem)
 
@@ -355,3 +355,38 @@ write.csv(four_foil_counts_collapsed_final2, "C:\\Users\\abima\\Desktop\\corp-an
 
 foil_collapsed_final <- cbind(four_foil_counts_collapsed_final2[1], four_foil_counts_collapsed_final2[, -1] + three_foil_counts_collapsed_final[match(four_foil_counts_collapsed_final2$foil_stem, three_foil_counts_collapsed_final$foil_stem), -1])
 write.csv(foil_collapsed_final, "C:\\Users\\abima\\Desktop\\corp-an\\foils\\foil_collapsed_final.csv")
+#finding how many children we have. should be 126
+#length(unique(four_foil_counts_collapsed_final2$))
+
+savehistory(file = "C:\\Users\\abima\\Desktop\\corp-an\\foils\\foils.Rhistory")
+
+combined_foil_frames <- rbind(mini_four_foil_frames_with_wordstem_cleaned2,mini_three_foil_frames_with_wordstem_cleaned2)
+write.csv(combined_foil_frames, "C:\\Users\\abima\\Desktop\\corp-an\\foils\\combined_foil_frames.csv")
+
+
+#combined child word_stem frequency
+three_foil_counts_for_combining <- read.csv(file = "C:\\Users\\abima\\Desktop\\corp-an\\foils\\three_foil_counts.csv", header = TRUE)
+four_foil_counts_for_combining <- read.csv(file = "C:\\Users\\abima\\Desktop\\corp-an\\foils\\four_foil_counts.csv", header = TRUE)
+four_foil_counts_for_combining$X <- NULL
+three_foil_counts_for_combining$X <- NULL
+
+combined_child_wordstem_counts <- rbind(three_foil_counts_for_combining, four_foil_counts_for_combining)
+common_cols <- intersect(colnames(three_foil_counts_for_combining), colnames(four_foil_counts_for_combining))
+combined_child_wordstem_counts2 <- rbind(subset(three_foil_counts_for_combining, select = common_cols), 
+                 subset(four_foil_counts_for_combining, select = common_cols))
+
+filter_by_wordstem_counts2_FOILS_COMBINED <- combined_child_wordstem_counts2 %>% group_by(foil_stem,target_child_id) %>%
+  summarize(count = sum(unique(length(foil_stem))))
+
+filter_by_wordstem_counts4_FOILS_COMBINED <- combined_child_wordstem_counts2 %>% group_by(foil_stem) %>%
+  summarize(tokens = sum(unique(length(foil_stem))), num_chi = length(unique(target_child_id)))
+
+#checking if the rbind worked, by checking the individual dataframes
+num <- aggregate(count~foil_stem, three_foil_counts_for_combining,sum)
+num4<- aggregate(count~foil_stem, four_foil_counts_for_combining,sum)
+
+combined_child_wordstem_counts <-rbind(three_foil_counts_for_combining, four_foil_counts_for_combining)
+write.csv(combined_child_wordstem_counts, "C:\\Users\\abima\\Desktop\\corp-an\\wide predicate search\\wordstem_freq_per_child_FOIL.csv")
+combined_child_wordstem_counts_collapsed_final <- aggregate(count~foil_stem, combined_child_wordstem_counts,sum)
+
+# *********************************************** F O I L   I N P U T ********************************************************************************
