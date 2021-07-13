@@ -254,63 +254,79 @@ four_year_olds_tokens_df <- get_tokens(
   token = sym_list$form
 )
 
-four_year_olds_tokens_df <- four_year_olds_tokens_df %>% arrange(target_child_id)
+length(unique(four_year_olds_tokens_df$target_child_id)) #63 (including some from the 3 year old db)
 
-four2_year_olds_tokens_df <- select(four_year_olds_tokens_df, 'target_child_id', 'corpus_name', 'target_child_age',
-                                    'gloss', 'part_of_speech','target_child_sex','stem','utterance_id')
-length(unique(four2_year_olds_tokens_df$target_child_id)) #63 unique before filtering
-length(four2_year_olds_tokens_df$gloss) #1583
-names(four2_year_olds_tokens_df)[names(four2_year_olds_tokens_df) == "part_of_speech"] <- "pos"
-names(four2_year_olds_tokens_df)[names(four2_year_olds_tokens_df) == "gloss"] <- "form"
+four_year_olds_tokens_df_trimmed <- select(four_year_olds_tokens_df, 'target_child_id', 'corpus_name', 'target_child_age',
+                                    'gloss', 'part_of_speech','target_child_sex','stem','utterance_id','target_child_age')
 
+#renaming columns
+names(four_year_olds_tokens_df_trimmed)[names(four_year_olds_tokens_df_trimmed) == "part_of_speech"] <- "pos"
+names(four_year_olds_tokens_df_trimmed)[names(four_year_olds_tokens_df_trimmed) == "gloss"] <- "form"
 
-#filter by pos
-#filter by pos - setting up the column we need.
-#sym_list_pos$formpos <- paste(sym_list_pos$form, sym_list_pos$pos) - Already initiated above.
+#filter the df by part (past participle) and v (verb)
+four_sym_filtered_pos_df <- four_year_olds_tokens_df_trimmed %>% filter(pos == 'v' | pos == 'part')
+length(four_sym_filtered_pos_df$target_child_id) #504
+#now we want to know what words don't appear in the db
+four_sym_not_in_db <- sym_list %>% filter(!form %in% four_sym_filtered_pos_df$form)
+write.csv(four_sym_not_in_db, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\four_sym_not_in_db.csv")
 
-four2_year_olds_tokens_df$formpos <- paste(four2_year_olds_tokens_df$form, four2_year_olds_tokens_df$pos)
-
-four2_year_olds_tokens_df_filtered_pos <- four2_year_olds_tokens_df %>%
-  filter(formpos %in% sym_list_pos_paste$formpos)
-length(four2_year_olds_tokens_df_filtered_pos$target_child_id) #1167 it worked!
-
-length(unique(four2_year_olds_tokens_df_filtered_pos$target_child_id)) #60 after filtering by POS (but this still has repeats)
-length(four2_year_olds_tokens_df_filtered_pos$target_child_id) # for later comparison with four_full.#1167
+length(four_sym_filtered_pos_df$target_child_id) #504
+length(unique(four_sym_filtered_pos_df$target_child_id)) #55
+# brb #
 
 #making df of unique ids in four year olds
-ids_for_four <- unique(four2_year_olds_tokens_df_filtered_pos$target_child_id)
-ids_for_four <- as.data.frame(ids_for_four)
-length(unique(ids_for_four$ids_for_four)) #60 unique ids, with repeats
+ids_for_fours <- as.data.frame(unique(four_sym_filtered_pos_df$target_child_id))
+names(ids_for_fours)[names(ids_for_fours) == "unique(four_sym_filtered_pos_df$target_child_id)"] <- "target_child_id"
+length(unique(ids_for_fours$target_child_id)) #55 unique ids with duplicate children from the 3 year old db
+
+#storing the 3 year olds in the four year old db in repeats.
+repeats <- ids_for_fours %>% filter(target_child_id %in% ids_for_threes$target_child_id)
+length(unique(repeats$target_child_id)) #14
+
+#removing the 3 year olds from the 4 year old db.
+ids_for_fours_no_rep <- ids_for_fours %>% filter(!target_child_id %in% ids_for_threes$target_child_id)
+length(unique(ids_for_fours_no_rep$target_child_id)) #41
+
+#checking if they are gone!
+repeats %in% ids_for_fours_no_rep$target_child_id
 
 #generate 90 instances of an ID
-four_many_ids <- ids_for_four %>% slice(rep(1:n(), each = 90))
-length(four_many_ids$ids_for_four) #5400
-names(four_many_ids)[names(four_many_ids) == "ids_for_four"] <- "unique_ids"
-four_many_ids
+four_many_ids <- ids_for_fours_no_rep %>% slice(rep(1:n(), each = 90))
+length(four_many_ids$target_child_id) #3690 (41 * 90)
 
-#generate 62 (for each unique id) instances of sym_words
-n = 60
+#generate 41 (for each unique id) instances of sym_words
+n = 41
 four_many_syms <- do.call("rbind", replicate(n, sym_list, simplify = FALSE))
-length(four_many_syms$form) #5400
+length(four_many_syms$form) #3690
 
 # Merge many IDS with many syms
-four_sym_and_id <- cbind(four_many_syms, target_child_id = four_many_ids$unique_ids)
-length(four_sym_and_id$target_child_id) #5400
-
-#merging three_sym_and_id with three_year_olds_token
+four_sym_and_id <- cbind(four_many_syms, target_child_id = four_many_ids$target_child_id)
+length(four_sym_and_id$target_child_id) #3690
 
 #replacing age with 4
 
-#peace <- four_year_olds_tokens_df
-four2_year_olds_tokens_df_filtered_pos$target_child_age <-  replace(four2_year_olds_tokens_df_filtered_pos$target_child_age,
-                                                                    four2_year_olds_tokens_df_filtered_pos$target_child_age >= 48.00 &
-                                                                    four2_year_olds_tokens_df_filtered_pos$target_child_age < 60.00, 4)
+four_sym_filtered_pos_df$target_child_age <-  replace(four_sym_filtered_pos_df$target_child_age,
+                                                      four_sym_filtered_pos_df$target_child_age >= 48.00 &
+                                                      four_sym_filtered_pos_df$target_child_age < 60.00, 4)
 
-#length(peace$target_child_id) #1196
-#before running this change the age of all children to 4! and then merge
+length(four_sym_filtered_pos_df$target_child_id) #504
+#you can use four_sym_filtered_pos_df to extract sentence frames for three year olds Using utterance_id
+#No! Remove the repeats first!
+
+#saving
+#save.image("~/GitHub/childesr-corpus-analysis/symmetricals/children/child-production-of-symmetricals-shortened-environment.RData")
+
+four_sym_filtered_pos_df <- four_sym_filtered_pos_df %>% filter(!target_child_id %in% ids_for_threes$target_child_id)
+length(unique(four_sym_filtered_pos_df$target_child_id)) #41
+#now you can use it to extract frames.
+
 detach(package:plyr)
-four_counts <- four2_year_olds_tokens_df_filtered_pos %>% group_by(form, target_child_id, target_child_age, target_child_sex) %>%
-  summarize(count = sum(unique(length(form))))
+four_counts <- four_sym_filtered_pos_df %>% group_by(form, target_child_id, target_child_age, target_child_sex,corpus_name,utterance_id) %>%
+  summarize(count = sum(unique(length(form)))) #349 rows
+#checking we still have the same amount of children.
+length(unique(four_counts$target_child_id)) #41
+
+# Left off here # 
 
 four_counts <- four_counts %>% arrange(target_child_id)
 
