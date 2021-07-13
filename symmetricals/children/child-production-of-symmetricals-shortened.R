@@ -327,38 +327,72 @@ four_counts <- four_sym_filtered_pos_df %>% group_by(form, target_child_id, targ
 length(unique(four_counts$target_child_id)) #41
 
 # Left off here # 
+#this could be useful later on.
+four_counts_pasted_targetid_uttid_stem <- as.data.frame(paste(four_sym_filtered_pos_df$target_child_id, four_sym_filtered_pos_df$stem, four_sym_filtered_pos_df$utterance_id))
+names(four_counts_pasted_targetid_uttid_stem)[names(four_counts_pasted_targetid_uttid_stem) == "paste(four_sym_filtered_pos_df$target_child_id, four_sym_filtered_pos_df$stem, four_sym_filtered_pos_df$utterance_id)"] <- "wordstem"
+four_counts_pasted_targetid_uttid_stem_separate <- four_counts_pasted_targetid_uttid_stem %>% separate(wordstem, c("target_child_id", "stem", "utterance_id"))
 
+#arranging by target_id helps when merging columns.
 four_counts <- four_counts %>% arrange(target_child_id)
+length(unique(four_counts$target_child_id)) #41
 
-length(unique(four_counts$target_child_id)) #60
+length(four_counts$form) #280
+length(four_sym_and_id$form)#3690
 
-length(four_counts$target_child_id) #388
-length(four_sym_and_id$form)#5400
-length(unique(four_sym_and_id$target_child_id)) #60
-
-
+#its okay for the rows/columns here to not be equal
 four_full <- merge(four_counts, four_sym_and_id, all = TRUE) #Original 
-length(four_full$target_child_id) #5400
+length(four_full$target_child_id) #3805
+
+length(unique(four_full$form)) #91
+#deals with the random "thought" that was inserted.
+four_full<- four_full %>% filter(form %in% sym_list$form)
+length(unique(four_full$form))
+length(unique(four_full$target_child_id)) #41
+
+four_full$target_child_sex <-NULL
+four_full$corpus_name <- NULL
+four_full$utterance_id <- NULL
 
 length(unique(four_full$form)) #90
-length(unique(four_full$target_child_id)) #60
-
-length(four_full$target_child_id) #5400
-four_full <- four_full %>% arrange(target_child_id)
+length(unique(four_full$target_child_id)) #41
+length(four_full$form) #3804
 
 #now go in and change nas for age to 4 and nas for count to 0
 
 four_full$count[is.na(four_full$count)] <- 0
 four_full$target_child_age[is.na(four_full$target_child_age)] <- 4
-sum(four_full$count) #1167. Matches four_year_olds_tokendf?, ** 
+sum(four_full$count) #290. Matches four_year_olds_tokendf?, ** 
+#taking out think here
+four_sym_filtered_pos_df <- four_sym_filtered_pos_df %>% filter(stem != 'think')
 
-sum(length(four2_year_olds_tokens_df_filtered_pos$form)) #1167
+#we select our top 12 symmetricals here
+filter_by_stem_four <- four_full %>% filter(stem == 'touch' | stem == 'fight' | stem == 'match' | stem == 'kiss' | stem == 'meet' | stem == 'marry' | stem == 'attach' | stem == 'connect' | stem == 'hug'
+                                        | stem == 'join' | stem == 'separate' | stem == 'trade')
+length(filter_by_stem_four$target_child_id) #2076
+length(unique(filter_by_stem_four$target_child_id)) #41
 
-#length(four_full$form == "friend")
-#count(four_full[1:100,], vars = "form")
+#collapsed by stem + the number of counts for each stem
+four_child_sum <- aggregate(filter_by_stem_four$count, by=list(filter_by_stem_four$stem), sum)
 
-length(unique(four_full$form))
-length(unique(three_full$form))
+#every stem and their count for each child.
+four_child_all_stems_per_child <- filter_by_stem_four %>% group_by(target_child_id,stem) %>%
+  summarize(tokens = sum(count))
+
+#test2 <- filter_by_stem %>% group_by(stem) %>%
+#summarize(num_chi = )
+
+
+#only_attach <- test %>% filter(stem == 'attach')
+#checking <- as.data.frame(only_attach$target_child_id[only_attach$tokens > 0])
+#table(checking) #this works but how to scale it up?
+
+four_child_all_stems_per_child_no_zeros <- four_child_all_stems_per_child
+
+four_child_all_stems_per_child_no_zeros <- four_child_all_stems_per_child_no_zeros %>% filter(tokens != 0)
+#eliminating the zeros worked!
+verb_pairs_for_four_child_sheet <- four_child_all_stems_per_child_no_zeros %>% dplyr::group_by(stem) %>%
+  dplyr::summarize(tokens = sum(tokens), num_chi = length(unique(target_child_id)))
+
 # ***********************************************************************************************************
 
 ## **************************************************Dealing with repeats************************************
