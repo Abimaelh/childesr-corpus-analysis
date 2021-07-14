@@ -190,6 +190,12 @@ num_of_children_in_each_corpus_three <- exclusion_three_info_final %>% dplyr::gr
   dplyr::summarize(num_chi = length(unique(target_child_id)))
 write.csv(num_of_children_in_each_corpus_three, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\num-of-children-in-each-corpus-three.csv")
 
+#token frequency per child to check for outliers
+token_freq_per_child_three <- exclusion_three_info_final %>% dplyr::group_by(target_child_id) %>%
+  dplyr::summarize(tokens = (length(stem)), corpus_name = (corpus_name))
+token_freq_per_child_three_final <- unique(token_freq_per_child_three)
+write.csv(token_freq_per_child_three_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\token_freq_per_child_three_final.csv")
+
 #checking one participant
 get_participants(
   collection = "Eng-NA",
@@ -414,6 +420,12 @@ num_of_children_in_each_corpus_four <- exclusion_four_info_final %>% dplyr::grou
   dplyr::summarize(num_chi = length(unique(target_child_id)))
 write.csv(num_of_children_in_each_corpus_four, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\num_of_children_in_each_corpus_four.csv")
 
+#token frequency per child to check for outliers
+token_freq_per_child_four <- exclusion_four_info_final %>% dplyr::group_by(target_child_id) %>%
+  dplyr::summarize(tokens = (length(stem)), corpus_name = (corpus_name))
+token_freq_per_child_four_final <- unique(token_freq_per_child_four)
+write.csv(token_freq_per_child_four_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\token_freq_per_child_four_final.csv")
+
 #combined verb-pairs
 combined_three_four_verb_pair_tokens <- rbind(verb_pairs_for_four_child_sheet,verb_pairs_for_three_child_sheet)
 
@@ -434,7 +446,7 @@ write.csv(combined_corpra_tokens_final, "C:\\Users\\abima\\Documents\\GitHub\\ch
 combined_num_of_children_in_each_corpus <- rbind(num_of_children_in_each_corpus_three,num_of_children_in_each_corpus_four)
 combined_num_of_children_in_each_corpus_final <- combined_num_of_children_in_each_corpus %>% dplyr::group_by(corpus_name) %>%
   dplyr::summarize(num_chi = sum(num_chi))
-write.csv(combined_corpra_tokens_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\combined_corpra_tokens_final.csv")
+write.csv(combined_num_of_children_in_each_corpus_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\combined_num_of_children_in_each_corpus_final.csv")
 
 # SENTENCE FRAMES FOR 4 year olds *************************************************************************************************************************
 four_ut <- get_utterances(
