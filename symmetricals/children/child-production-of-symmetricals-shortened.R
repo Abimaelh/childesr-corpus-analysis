@@ -353,6 +353,7 @@ combined_three_four_verb_pair_tokens <- rbind(verb_pairs_for_four_child_sheet,ve
 
 combined_three_four_verb_pair_tokens_summed <- combined_three_four_verb_pair_tokens %>% dplyr::group_by(stem) %>%
   dplyr::summarize(tokens = sum(tokens), num_chi = sum(num_chi))
+write.csv(combined_three_four_verb_pair_tokens_summed, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\combined_three_four_verb_pair_tokens_summed.csv")
 
 
 # SENTENCE FRAMES FOR 4 year olds *************************************************************************************************************************
