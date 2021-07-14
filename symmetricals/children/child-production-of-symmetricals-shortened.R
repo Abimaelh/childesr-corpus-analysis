@@ -98,6 +98,11 @@ length(unique(three_counts$target_child_id)) #33
 three_counts_pasted_targetid_uttid_stem <- as.data.frame(paste(three_sym_filtered_pos_df$target_child_id, three_sym_filtered_pos_df$stem, three_sym_filtered_pos_df$utterance_id))
 names(three_counts_pasted_targetid_uttid_stem)[names(three_counts_pasted_targetid_uttid_stem) == "paste(three_sym_filtered_pos_df$target_child_id, three_sym_filtered_pos_df$stem, three_sym_filtered_pos_df$utterance_id)"] <- "wordstem"
 three_counts_pasted_targetid_uttid_stem_separate <- three_counts_pasted_targetid_uttid_stem %>% separate(wordstem, c("target_child_id", "stem", "utterance_id"))
+length(unique(three_counts_pasted_targetid_uttid_stem_separate$target_child_id)) #33
+three_counts_pasted_targetid_uttid_stem_separate <- three_counts_pasted_targetid_uttid_stem_separate %>% filter(stem == 'touch' | stem == 'fight' | stem == 'match' | stem == 'kiss' | stem == 'meet' | stem == 'marry' | stem == 'attach' | stem == 'connect' | stem == 'hug'
+                                                                                                              | stem == 'join' | stem == 'separate' | stem == 'trade')
+length(unique(three_counts_pasted_targetid_uttid_stem_separate$target_child_id)) #31
+length(three_counts_pasted_targetid_uttid_stem_separate$target_child_id) #310 good to use now.
 
 #arranging by target_id helps when merging columns.
 three_counts <- three_counts %>% arrange(target_child_id)
@@ -146,10 +151,58 @@ three_child_all_stems_per_child <- filter_by_stem %>% group_by(target_child_id,s
 three_child_all_stems_per_child_no_zeros <- three_child_all_stems_per_child
 
 three_child_all_stems_per_child_no_zeros <- three_child_all_stems_per_child_no_zeros %>% filter(tokens != 0)
+length(unique(three_child_all_stems_per_child_no_zeros$target_child_id))
 #eliminating the zeros worked!
 verb_pairs_for_three_child_sheet <- three_child_all_stems_per_child_no_zeros %>% dplyr::group_by(stem) %>%
   dplyr::summarize(tokens = sum(tokens), num_chi = length(unique(target_child_id)))
+length(unique(three_child_all_stems_per_child_no_zeros$target_child_id)) #31
 
+
+#Extracting corpus information so we can exclude atypical children
+exclusion_three_info <- three_year_olds_tokens_df_trimmed %>% filter(utterance_id %in% three_counts_pasted_targetid_uttid_stem_separate$utterance_id) 
+length(unique(exclusion_three_info$stem))
+unique(exclusion_three_info$stem) #nouns and empty stems
+exclusion_three_info_final <- exclusion_three_info %>% filter(stem == 'touch' | stem == 'fight' | stem == 'match' | stem == 'kiss' | stem == 'meet' | stem == 'marry' | stem == 'attach' | stem == 'connect' | stem == 'hug'
+                                                            | stem == 'join' | stem == 'separate' | stem == 'trade')
+length(unique(exclusion_three_info_final$stem)) #12
+#good this is the one we need to pull frames!
+length(exclusion_three_info_final$target_child_id) #314
+length(unique(exclusion_three_info_final$target_child_id)) #31
+
+exclusion_three_info_final$target_child_id %in% three_child_all_stems_per_child_no_zeros$target_child_id
+exclusion_three_info_final <- exclusion_three_info_final %>% arrange(target_child_id)
+exclusion_three_info_final <- exclusion_three_info_final %>% filter(pos == 'v' | pos == 'part')
+length(exclusion_three_info_final$target_child_id) #310 should be the same when we add the sum of counts for no zeros three.
+sum(three_child_all_stems_per_child_no_zeros$tokens) #310. Yup they match.
+length(unique(exclusion_three_info_final$target_child_id))#31
+
+#write.csv(exclusion_three_info_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\exclusion_three_info_final.csv")
+#check the corpra in this df
+unique(exclusion_three_info_final$corpus_name)
+
+#tokens per corpus
+corpra_tokens_three <- exclusion_three_info_final %>% dplyr::group_by(corpus_name) %>%
+  dplyr::summarize(tokens = length(corpus_name))
+write.csv(corpra_tokens_three,"C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\tokens-from-each-corpus-three.csv")
+
+#number of children in each corpus
+num_of_children_in_each_corpus_three <- exclusion_three_info_final %>% dplyr::group_by(corpus_name) %>%
+  dplyr::summarize(num_chi = length(unique(target_child_id)))
+write.csv(num_of_children_in_each_corpus_three, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\num-of-children-in-each-corpus-three.csv")
+
+#checking one participant
+get_participants(
+  collection = "Eng-NA",
+  corpus = "Demetras1",
+  age = 39
+)
+
+check_prov <- get_participants(
+  collection = "Eng-NA",
+  corpus = "Providence",
+)
+
+unique(exclusion_three_info_final$target_child_id %in% exclusion_three_info_final$corpus_name == 'Providence')
 # SENTENCE FRAMES FOR 3 year olds************************************************************************************************************************
 three_ut <- get_utterances(
   collection = "Eng-NA",
@@ -322,6 +375,9 @@ sum(four_child_all_stems_per_child_no_zeros$tokens) #266
 #eliminating the zeros worked!
 verb_pairs_for_four_child_sheet <- four_child_all_stems_per_child_no_zeros %>% dplyr::group_by(stem) %>%
   dplyr::summarize(tokens = sum(tokens), num_chi = length(unique(target_child_id)))
+length(unique(four_child_all_stems_per_child_no_zeros$target_child_id)) #40
+sum(four_child_all_stems_per_child_no_zeros$tokens) #266
+length(exclusion_four_info_final$target_child_id) #266
 
 #Extracting corpus information so we can exclude atypical children
 exclusion_four_info <- four_year_olds_tokens_df_trimmed %>% filter(utterance_id %in% four_counts_pasted_targetid_uttid_stem_separate$utterance_id) 
@@ -348,6 +404,16 @@ length(unique(missing_child_for_four$target_child_id))
 
 length(exclusion_four_info_final$target_child_id)
 
+#tokens per corpus
+corpra_tokens_four <- exclusion_four_info_final %>% dplyr::group_by(corpus_name) %>%
+  dplyr::summarize(tokens = length(corpus_name))
+write.csv(corpra_tokens_four,"C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\tokens-from-each-corpus_four.csv")
+
+#number of children in each corpus
+num_of_children_in_each_corpus_four <- exclusion_four_info_final %>% dplyr::group_by(corpus_name) %>%
+  dplyr::summarize(num_chi = length(unique(target_child_id)))
+write.csv(num_of_children_in_each_corpus_four, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\num_of_children_in_each_corpus_four.csv")
+
 #combined verb-pairs
 combined_three_four_verb_pair_tokens <- rbind(verb_pairs_for_four_child_sheet,verb_pairs_for_three_child_sheet)
 
@@ -355,6 +421,20 @@ combined_three_four_verb_pair_tokens_summed <- combined_three_four_verb_pair_tok
   dplyr::summarize(tokens = sum(tokens), num_chi = sum(num_chi))
 write.csv(combined_three_four_verb_pair_tokens_summed, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\combined_three_four_verb_pair_tokens_summed.csv")
 
+sum(four_child_all_stems_per_child_no_zeros$tokens) #266
+length(exclusion_four_info_final$target_child_id) #266
+
+#combined tokens per copra
+combined_corpra_tokens <- rbind(corpra_tokens_three, corpra_tokens_four)
+combined_corpra_tokens_final <- combined_corpra_tokens %>% dplyr::group_by(corpus_name) %>%
+  dplyr::summarize(tokens = sum(tokens))
+write.csv(combined_corpra_tokens_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\combined_corpra_tokens_final.csv")
+
+#combined number of children in each corpus
+combined_num_of_children_in_each_corpus <- rbind(num_of_children_in_each_corpus_three,num_of_children_in_each_corpus_four)
+combined_num_of_children_in_each_corpus_final <- combined_num_of_children_in_each_corpus %>% dplyr::group_by(corpus_name) %>%
+  dplyr::summarize(num_chi = sum(num_chi))
+write.csv(combined_corpra_tokens_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\combined_corpra_tokens_final.csv")
 
 # SENTENCE FRAMES FOR 4 year olds *************************************************************************************************************************
 four_ut <- get_utterances(
