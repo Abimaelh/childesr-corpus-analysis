@@ -176,7 +176,7 @@ length(exclusion_three_info_final$target_child_id) #310 should be the same when 
 sum(three_child_all_stems_per_child_no_zeros$tokens) #310. Yup they match.
 length(unique(exclusion_three_info_final$target_child_id))#31
 
-#write.csv(exclusion_three_info_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\exclusion_three_info_final.csv")
+write.csv(exclusion_three_info_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\exclusion_three_info_final.csv")
 #check the corpra in this df
 unique(exclusion_three_info_final$corpus_name)
 

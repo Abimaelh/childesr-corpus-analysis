@@ -201,6 +201,7 @@ token_freq_per_child_three_foils <- exclusion_three_info_foils_final %>% dplyr::
   dplyr::summarize(tokens = (length(stem)), corpus_name = (corpus_name))
 token_freq_per_child_three_foils_final <- unique(token_freq_per_child_three_foils)
 write.csv(token_freq_per_child_three_foils_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\foils\\children\\token-freq-per-child-three-foils-final.csv")
+length(unique(token_freq_per_child_three_foils_final$target_child_id)) #73
 
 #checking one participant
 get_participants(
@@ -307,6 +308,9 @@ four_counts_pasted_targetid_uttid_stem_separate_foils <- four_counts_pasted_targ
                                                                                                                             stem == 'pet' | stem == 'stroke' | stem == 'pull' | stem == 'lick' | stem == 'bite' | stem == 'invite' | stem == 'celebrate' | 
                                                                                                                             stem == 'adopt' | stem == 'choose' | stem == 'check' | stem == 'teach' | stem == 'greet' | stem == 'push' | stem == 'tap' | 
                                                                                                                             stem == 'hold' | stem == 'bump' | stem == 'sell' | stem == 'buy')
+four_counts_pasted_targetid_uttid_stem_separate_foils[four_counts_pasted_targetid_uttid_stem_separate_foils$stem=='bit', "stem"] <- "bite"
+#fixing the 'bit' stem issue
+
 #USE THIS TO GET THE FRAMES! AND FIND DUPLICATES!
 #length(unique(four_counts_pasted_targetid_uttid_stem_separate2$target_child_id))
 length(four_counts_pasted_targetid_uttid_stem_separate_foils$target_child_id) #1128 (THIS SHOULD ADD UP TO THE LENGTH OF EXCLUSION FOR FINAL AND THE SUM OF NO ZEROS DF) it doesn't because this includes words
@@ -353,7 +357,7 @@ sum(four_full_foils$count) #290. Matches four_year_olds_tokendf?, **
 filter_by_stem_four_foils <- four_full_foils %>% filter(stem == 'cover' | stem == 'insert' | stem == 'tie' | stem == 'drop' | stem == 'knot' | stem == 'punch' | stem == 'kick' | stem == 'attack' | stem == 'tickle' |
                                               stem == 'pet' | stem == 'stroke' | stem == 'pull' | stem == 'lick' | stem == 'bite' | stem == 'invite' | stem == 'celebrate' | 
                                               stem == 'adopt' | stem == 'choose' | stem == 'check' | stem == 'teach' | stem == 'greet' | stem == 'push' | stem == 'tap' | 
-                                              stem == 'hold' | stem == 'bump' | stem == 'sell' | stem == 'buy')
+                                              stem == 'hold' | stem == 'bump' | stem == 'sell' | stem == 'buy' | stem == 'bit')
 length(filter_by_stem_four_foils$target_child_id) #6184
 length(unique(filter_by_stem_four_foils$target_child_id)) #53
 # need to add another constraint. 
@@ -363,13 +367,14 @@ length(unique(filter_by_stem_four_foils$target_child_id)) #53
 four_child_sum_foils <- aggregate(filter_by_stem_four_foils$count, by=list(filter_by_stem_four_foils$stem), sum)
 
 #every stem and their count for each child.
+detach(package:plyr)
 four_child_all_stems_per_child_foils <- filter_by_stem_four_foils %>% group_by(target_child_id,stem) %>%
   summarize(tokens = sum(count))
 #this could be useful, once we fix the one extra token for 2291 bite
-
+sum(four_child_all_stems_per_child_foils$tokens)
 #test2 <- filter_by_stem %>% group_by(stem) %>%
 #summarize(num_chi = )
-
+write.csv(four_child_all_stems_per_child_foils, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\foils\\children\\four_child_all_stems_per_child_foils")
 
 #only_attach <- test %>% filter(stem == 'attach')
 #checking <- as.data.frame(only_attach$target_child_id[only_attach$tokens > 0])
@@ -389,6 +394,7 @@ verb_pairs_for_four_child_sheet_foils <- four_child_all_stems_per_child_no_zeros
 length(unique(four_child_all_stems_per_child_no_zeros_foils$target_child_id)) #53
 sum(four_child_all_stems_per_child_no_zeros_foils$tokens) #1129
 length(exclusion_four_info_foils_final$target_child_id) #266
+write.csv(verb_pairs_for_four_child_sheet_foils, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\foils\\children\\verb_pairs_for_four_child_sheet_foils.csv")
 
 #Extracting corpus information so we can exclude atypical children
 exclusion_four_info_foils <- four_foils_df_trimmed %>% filter(utterance_id %in% four_counts_pasted_targetid_uttid_stem_separate_foils$utterance_id) 
@@ -397,8 +403,8 @@ unique(exclusion_four_info_foils$stem) #nouns and empty stems
 exclusion_four_info_foils_final <- exclusion_four_info_foils %>% filter(stem == 'cover' | stem == 'insert' | stem == 'tie' | stem == 'drop' | stem == 'knot' | stem == 'punch' | stem == 'kick' | stem == 'attack' | stem == 'tickle' |
                                                                           stem == 'pet' | stem == 'stroke' | stem == 'pull' | stem == 'lick' | stem == 'bite' | stem == 'invite' | stem == 'celebrate' | 
                                                                           stem == 'adopt' | stem == 'choose' | stem == 'check' | stem == 'teach' | stem == 'greet' | stem == 'push' | stem == 'tap' | 
-                                                                          stem == 'hold' | stem == 'bump' | stem == 'sell' | stem == 'buy')
-length(unique(exclusion_four_info_foils_final$stem)) #23 because 2 didn't come up?
+                                                                          stem == 'hold' | stem == 'bump' | stem == 'sell' | stem == 'buy'| stem =='bit')
+length(unique(exclusion_four_info_foils_final$stem)) #24 (although its really 23 because of 'bit')
 #good this is the one we need to pull frames!
 length(exclusion_four_info_foils_final$target_child_id) #1154
 
@@ -406,16 +412,17 @@ exclusion_four_info_foils_final$target_child_id %in% four_child_all_stems_per_ch
 exclusion_four_info_foils_final <- exclusion_four_info_foils_final %>% arrange(target_child_id)
 exclusion_four_info_foils_final <- exclusion_four_info_foils_final %>% filter(pos == 'v' | pos == 'part')
 length(exclusion_four_info_foils_final$target_child_id) #1128
+exclusion_four_info_foils_final[exclusion_four_info_foils_final$stem=='bit', "stem"] <- "bite"
 write.csv(exclusion_four_info_foils_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\foils\\children\\exclusion_four_info_foils_final.csv")
 #check the corpra in this df
 unique(exclusion_four_info_foils_final$corpus_name)
 
 length(unique(exclusion_four_info_foils_final$target_child_id)) #53
-length(unique(filter_by_stem_four_foils$target_child_id))
+length(unique(filter_by_stem_four_foils$target_child_id)) #53
 missing_child_for_four_foils <- exclusion_four_info_foils_final %>% filter(!utterance_id %in% four_counts_pasted_targetid_uttid_stem_separate_foils$utterance_id)
 length(unique(missing_child_for_four_foils$target_child_id))
 
-length(exclusion_four_info_foils_final$target_child_id) #1128
+length(exclusion_four_info_foils_final$target_child_id) #1129
 length(unique(exclusion_four_info_foils_final$target_child_id)) #53
 length(unique(exclusion_four_info_foils_final$stem)) #23
 length(unique(exclusion_four_info_foils_final$pos)) #2
@@ -453,39 +460,100 @@ save.image("~/GitHub/childesr-corpus-analysis/foils/children/child-production-of
 corpra_tokens_four_foils <- exclusion_four_info_foils_final %>% dplyr::group_by(corpus_name) %>%
   dplyr::summarize(tokens = length(corpus_name))
 write.csv(corpra_tokens_four_foils,"C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\foils\\children\\tokens-from-each-corpus-four-foils.csv")
+sum(corpra_tokens_four_foils$tokens)
+length(exclusion_four_info_foils_final$target_child_id)
 
 #number of children in each corpus
 num_of_children_in_each_corpus_four_foils <- exclusion_four_info_foils_final %>% dplyr::group_by(corpus_name) %>%
   dplyr::summarize(num_chi = length(unique(target_child_id)))
-write.csv(num_of_children_in_each_corpus_four, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\num_of_children_in_each_corpus_four.csv")
+write.csv(num_of_children_in_each_corpus_four_foils, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\foils\\children\\num_of_children_in_each_corpus_four_foils.csv")
+length(unique(exclusion_four_info_foils_final$target_child_id))
 
 #token frequency per child to check for outliers
-token_freq_per_child_four <- exclusion_four_info_final %>% dplyr::group_by(target_child_id) %>%
+token_freq_per_child_four_foils <- exclusion_four_info_foils_final %>% dplyr::group_by(target_child_id) %>%
   dplyr::summarize(tokens = (length(stem)), corpus_name = (corpus_name))
-token_freq_per_child_four_final <- unique(token_freq_per_child_four)
-write.csv(token_freq_per_child_four_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\token_freq_per_child_four_final.csv")
+token_freq_per_child_four_foils_final <- unique(token_freq_per_child_four_foils)
+write.csv(token_freq_per_child_four_foils_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\foils\\children\\token_freq_per_child_four_foils_final.csv")
 
 #combined verb-pairs
-combined_three_four_verb_pair_tokens <- rbind(verb_pairs_for_four_child_sheet,verb_pairs_for_three_child_sheet)
+combined_three_four_verb_pair_tokens_foils <- rbind(verb_pairs_for_four_child_sheet_foils,verb_pairs_for_three_child_sheet_foils)
 
-combined_three_four_verb_pair_tokens_summed <- combined_three_four_verb_pair_tokens %>% dplyr::group_by(stem) %>%
+combined_three_four_verb_pair_tokens_summed_foils <- combined_three_four_verb_pair_tokens_foils %>% dplyr::group_by(stem) %>%
   dplyr::summarize(tokens = sum(tokens), num_chi = sum(num_chi))
-write.csv(combined_three_four_verb_pair_tokens_summed, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\combined_three_four_verb_pair_tokens_summed.csv")
+write.csv(combined_three_four_verb_pair_tokens_summed_foils, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\foils\\children\\combined_three_four_verb_pair_tokens_summed_foils.csv")
 
-sum(four_child_all_stems_per_child_no_zeros$tokens) #266
-length(exclusion_four_info_final$target_child_id) #266
+sum(four_child_all_stems_per_child_no_zeros_foils$tokens) #266
+length(exclusion_four_info_foils_final$target_child_id) #266
 
 #combined tokens per copra
-combined_corpra_tokens <- rbind(corpra_tokens_three, corpra_tokens_four)
-combined_corpra_tokens_final <- combined_corpra_tokens %>% dplyr::group_by(corpus_name) %>%
+combined_corpra_tokens_foils <- rbind(corpra_tokens_three_foils, corpra_tokens_four_foils)
+combined_corpra_tokens_foils_final <- combined_corpra_tokens_foils %>% dplyr::group_by(corpus_name) %>%
   dplyr::summarize(tokens = sum(tokens))
-write.csv(combined_corpra_tokens_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\combined_corpra_tokens_final.csv")
+write.csv(combined_corpra_tokens_foils_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\foils\\children\\combined_corpra_tokens_foils_final.csv")
 
 #combined number of children in each corpus
-combined_num_of_children_in_each_corpus <- rbind(num_of_children_in_each_corpus_three,num_of_children_in_each_corpus_four)
-combined_num_of_children_in_each_corpus_final <- combined_num_of_children_in_each_corpus %>% dplyr::group_by(corpus_name) %>%
+combined_num_of_children_in_each_corpus_foils <- rbind(num_of_children_in_each_corpus_three_foils,num_of_children_in_each_corpus_four_foils)
+combined_num_of_children_in_each_corpus_foils_final <- combined_num_of_children_in_each_corpus_foils %>% dplyr::group_by(corpus_name) %>%
   dplyr::summarize(num_chi = sum(num_chi))
-write.csv(combined_num_of_children_in_each_corpus_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\combined_num_of_children_in_each_corpus_final.csv")
+write.csv(combined_num_of_children_in_each_corpus_foils_final, "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\foils\\children\\combined_num_of_children_in_each_corpus_foils_final.csv")
+
+#combined number of unique children in foils and symmetricals
+token_freq_per_child_three_sym_final<- read.csv(file = "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\token_freq_per_child_three_final.csv", header = TRUE)
+token_freq_per_child_three_sym_final$X <- NULL
+token_freq_per_child_three_sym_final$tokens <- NULL
+token_freq_per_child_three_sym_final$corpus_name <- NULL
+
+token_freq_per_child_four_sym_final <- read.csv(file = "C:\\Users\\abima\\Documents\\GitHub\\childesr-corpus-analysis\\symmetricals\\children\\token_freq_per_child_four_final.csv", header = TRUE)
+token_freq_per_child_four_sym_final$X <- NULL
+token_freq_per_child_four_sym_final$tokens <- NULL
+token_freq_per_child_four_sym_final$corpus_name <- NULL
+
+combined_num_of_children_in_syms <- rbind(token_freq_per_child_four_sym_final, token_freq_per_child_three_sym_final)
+combined_num_of_children_in_syms_unique <- as.data.frame(unique(combined_num_of_children_in_syms$target_child_id))
+names(combined_num_of_children_in_syms_unique)[names(combined_num_of_children_in_syms_unique) == "unique(combined_num_of_children_in_syms$target_child_id)"] <- "target_child_id"
+
+length(unique(combined_num_of_children_in_syms_unique$target_child_id)) #71
+
+#foils
+token_freq_per_child_three_foils_final_targetid <- as.data.frame(unique(token_freq_per_child_three_foils_final$target_child_id))
+names(token_freq_per_child_three_foils_final_targetid)[names(token_freq_per_child_three_foils_final_targetid) == "unique(token_freq_per_child_three_foils_final$target_child_id)"] <- "target_child_id"
+
+token_freq_per_child_four_foils_final_targetid <- as.data.frame(unique(token_freq_per_child_four_foils_final$target_child_id))
+names(token_freq_per_child_four_foils_final_targetid)[names(token_freq_per_child_four_foils_final_targetid) == "unique(token_freq_per_child_four_foils_final$target_child_id)"] <- "target_child_id"
+
+combined_num_of_children_in_foils <- rbind(token_freq_per_child_three_foils_final_targetid, token_freq_per_child_four_foils_final_targetid)
+combined_num_of_children_in_foils_unique <- as.data.frame(unique(combined_num_of_children_in_foils$target_child_id))
+names(combined_num_of_children_in_foils_unique)[names(combined_num_of_children_in_foils_unique) == "unique(combined_num_of_children_in_foils$target_child_id)"] <- "target_child_id"
+length(unique(combined_num_of_children_in_foils_unique$target_child_id)) #126
+
+foils_toke_freq_chi <- as.data.frame(token_freq_per_child_four_foils_final_targetid$target_child_id %in% token_freq_per_child_three_foils_final_targetid$target_child_id)
+
+how_many_symsids_in_foils <- as.data.frame(combined_num_of_children_in_foils_unique$target_child_id %in% combined_num_of_children_in_syms_unique$target_child_id)
+length(how_many_symsids_in_foils$`combined_num_of_children_in_foils_unique$target_child_id %in% combined_num_of_children_in_syms_unique$target_child_id` == 'TRUE')
+sum(how_many_symsids_in_foils$`combined_num_of_children_in_foils_unique$target_child_id %in% combined_num_of_children_in_syms_unique$target_child_id`, na.rm = TRUE)
+#71 shared ids - so 71 children contribute to both sym and foil tokens.
+
+#how many unique foil ids? Not in the shared count
+how_many_unique_foil_ids <- as.data.frame(combined_num_of_children_in_foils_unique$target_child_id %in% combined_num_of_children_in_syms_unique$target_child_id)
+sum(how_many_unique_foil_ids$`combined_num_of_children_in_foils_unique$target_child_id %in% combined_num_of_children_in_syms_unique$target_child_id`, na.rm = TRUE)
+
+#how many unique sym ids? not in the shared count
+how_many_unique_syms_ids <- as.data.frame(combined_num_of_children_in_syms_unique$target_child_id %in% combined_sym_foil_targetids$target_child_id)
+sum(how_many_unique_foil_ids$`combined_num_of_children_in_syms_unique$target_child_id %in% combined_sym_foil_targetids$target_child_id`, na.rm = TRUE)
+
+#combined unique target child ids
+combined_sym_foil_targetids <- rbind(combined_num_of_children_in_foils_unique, combined_num_of_children_in_syms_unique)
+length(unique(combined_sym_foil_targetids$target_child_id))#126
+
+#unique_foil_ids
+unique_foil_ids <- combined_sym_foil_targetids %>% filter(!target_child_id %in% combined_num_of_children_in_syms_unique$target_child_id)
+length(unique(unique_foil_ids$target_child_id))
+
+#unique_sym_ids
+unique_sym_ids <- combined_sym_foil_targetids %>% filter(!target_child_id %in% combined_num_of_children_in_foils_unique$target_child_id)
+length(unique(unique_sym_ids$target_child_id))
+
+length(unique(combined_num_of_children_in_syms_unique$target_child_id))
 
 # SENTENCE FRAMES FOR 4 year olds *************************************************************************************************************************
 four_ut <- get_utterances(
